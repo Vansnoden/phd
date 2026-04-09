@@ -26,66 +26,68 @@ if [ ! -f "$FILENAME.tex" ]; then
     exit 1
 fi
 
-mkdir -p build pdfs words
-rm -f build/"$FILENAME".{aux,bbl,blg,log,out,toc,lof,lot}
-
-echo "--- Compiling LaTeX to PDF ---"
-pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
-if [ $? -ne 0 ]; then
-    echo "Error: First pdflatex pass failed. Check build/$FILENAME.log"
-    exit 1
-fi
-
-bibtex build/"$FILENAME".aux
-
-pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
-pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex"
-if [ $? -ne 0 ]; then
-    echo "Error: PDF compilation failed. Check build/$FILENAME.log"
-    exit 1
-fi
-
-PDF_SRC="build/$FILENAME.pdf"
-if [ ! -f "$PDF_SRC" ]; then
-    echo "Error: PDF not found after compilation."
-    exit 1
-fi
-
-# --- Handle PDF output ---
+# --- PDF generation (if needed) ---
 if [ "$MODE" = "--pdf-only" ] || [ "$MODE" = "--both" ]; then
-    mv "$PDF_SRC" "pdfs/"
-    echo "PDF saved to pdfs/$FILENAME.pdf"
+    echo "--- Compiling LaTeX to PDF (with bibliography) ---"
+    mkdir -p build pdfs
+    rm -f build/"$FILENAME".{aux,bbl,blg,log,out,toc,lof,lot}
+
+    pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
+    if [ $? -ne 0 ]; then
+        echo "Error: First pdflatex pass failed. Check build/$FILENAME.log"
+        exit 1
+    fi
+
+    bibtex build/"$FILENAME".aux
+
+    pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
+    pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex"
+    if [ $? -eq 0 ]; then
+        mv "build/$FILENAME.pdf" "pdfs/"
+        echo "PDF saved to pdfs/$FILENAME.pdf"
+    else
+        echo "Error: PDF compilation failed. Check build/$FILENAME.log"
+        exit 1
+    fi
 fi
 
-# --- Handle Word output ---
+# --- Word generation (if needed) ---
 if [ "$MODE" = "--word-only" ] || [ "$MODE" = "--both" ]; then
-    # Check for pdf2docx
-    if ! command -v pdf2docx &> /dev/null && ! python3 -c "import pdf2docx" &> /dev/null; then
-        echo "Error: pdf2docx not installed. Install with: pip install pdf2docx"
+    echo "--- Converting LaTeX to Word (DOCX) using pandoc ---"
+    mkdir -p words
+
+    # Check if pandoc is installed
+    if ! command -v pandoc &> /dev/null; then
+        echo "Error: pandoc not installed. Install with: sudo apt install pandoc"
         exit 1
     fi
 
-    echo "--- Converting PDF to Word (DOCX) using pdf2docx ---"
-    if [ "$MODE" = "--both" ]; then
-        PDF_FOR_WORD="pdfs/$FILENAME.pdf"
-    else
-        PDF_FOR_WORD="$PDF_SRC"
+    # Download a standard CSL if not present (for proper citation formatting)
+    CSL_FILE="chicago-author-date.csl"
+    if [ ! -f "$CSL_FILE" ]; then
+        echo "Downloading CSL style..."
+        curl -s -L -o "$CSL_FILE" "https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-author-date.csl"
     fi
 
-    DOCX_OUT="words/$FILENAME.docx"
-    # Use python -m pdf2docx convert
-    python3 -m pdf2docx convert "$PDF_FOR_WORD" "$DOCX_OUT"
+    # Run pandoc with natbib and citeproc (no crossref filter)
+    pandoc "$FILENAME.tex" \
+        --from latex \
+        --to docx \
+        --output "words/$FILENAME.docx" \
+        --natbib \
+        --citeproc \
+        --bibliography="bibliography.bib" \
+        --csl="$CSL_FILE" \
+        --resource-path=".:./figs:./figures" \
+        --wrap=preserve \
+        --highlight-style=tango
 
-    if [ $? -eq 0 ] && [ -f "$DOCX_OUT" ]; then
-        echo "Word document saved to $DOCX_OUT"
+    if [ $? -eq 0 ] && [ -f "words/$FILENAME.docx" ]; then
+        echo "Word document saved to words/$FILENAME.docx"
+        echo "Note: Cross-references (\\ref{}) are not automatically resolved in the Word output."
     else
-        echo "Error: PDF to DOCX conversion failed. Check that the PDF is valid."
+        echo "Error: pandoc conversion failed."
         exit 1
-    fi
-
-    # Clean up temporary PDF if --word-only
-    if [ "$MODE" = "--word-only" ]; then
-        rm -f "$PDF_SRC"
     fi
 fi
 
