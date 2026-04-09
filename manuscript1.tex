@@ -1,0 +1,660 @@
+\documentclass{article}
+\usepackage{blindtext}
+\usepackage{geometry}
+\usepackage{graphicx}
+\graphicspath{{./figs/}}
+\usepackage{booktabs}
+\usepackage{multirow, multicol, longtable}
+\usepackage{url}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\geometry{
+	a4paper,
+	total={170mm,257mm},
+	left=20mm,
+	top=20mm,
+}
+\usepackage[authoryear]{natbib} 
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{anyfontsize}
+\usepackage{lineno}
+\usepackage{authblk}
+\linenumbers
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\renewcommand{\baselinestretch}{1.5} 
+
+
+
+\title{A large language model pipeline to extract malaria vector data from 
+published literature: a case of \textit{Anopheles funestus} in Africa}
+
+\author[1,2]{Salvador D. Atagong}
+\author[1]{Kennedy Senagi}
+\author[1]{Mark Wamalwa}
+\author[1]{Komi Mensah Agboka}
+\author[2,3]{Henri Tonnang}
+\author[2]{John Odindi}
+
+\affil[1]{International Center of Insect Physiology and Ecology (ICIPE)}
+\affil[2]{University of KwaZulu-Natal, South Africa}
+\affil[3]{International Institute of Tropical Agriculture (IITA), Ibadan, Nigeria}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\section{Abstract}
+This study presents an automated framework for extracting structured research data from scientific 
+literature in Portable Document Format (PDF) to support timely public health decision-making. Using 
+the Gemini-2.5 Large Language Model (LLM) in a zero-shot setting, the approach integrates prompt 
+engineering with graph theory to enable efficient information extraction. The method was validated 
+through a case study on \textit{Anopheles funestus} in Africa, with results compared against manually 
+curated data from the Vector Atlas project (\url{https://vectoratlas.icipe.org/}) considered as ground 
+truth. From 394 publications, the pipeline extracted data on vector occurrence, bionomics, and insecticide 
+resistance, identifying 129 unique occurrence points in 1.44 hours (about 15 seconds per document, compared 
+to 15-30 minutes for manual data curation). Performance was evaluated by spatial comparison between the 
+manually curated data and the automatically extracted data, showing an average discrepancy of about 500 km 
+using the centroid and haversine formula, a negligible distance on a continental scale. Overall, the 
+framework (accessible at \url{https://narrator.voidmonad.com/}) demonstrates strong potential for 
+scalable, analytics-ready data extraction across large PDF corpora. 
+
+\paragraph{Keywords:} information extraction, large language models, data mining, prompt engineering, vector-borne diseases.
+
+
+\section{Introduction}
+\label{sec:introduction}
+\par
+Vector-borne diseases are infectious illnesses transmitted by arthropods such as mosquitoes, ticks, and flies. 
+These diseases cause significant global mortality, with the World Health Organization (WHO) estimating approximately 
+700,000 deaths annually \citep{2024.WH.VD, 2019.RU.VD}. 
+The majority of cases occur in the tropical regions, particularly sub-Saharan Africa, South America, and Southern Asia. 
+\par
+Among these diseases, Malaria is the deadliest, with an estimated 249 million cases and over 608,000 deaths each year \citep{2024.WH.VD}. 
+It is a parasitic infection transmitted by anopheline mosquitoes, primarily affecting children under the age of five. 
+Hence, numerous vector-control strategies have been developed and implemented to limit its spread \citep{2023.ST.ASR, 2016.AN.PPA}. 
+These include insecticide-treated nets (ITNs) for controlling mosquitoes \citep{2024.AJ.TBO}, larval source management (LSM) reducing mosquitoes population by targeting breading sites especially in urban settings \citep{2024.NF.SUO}, indoor residual spraying (IRS) targeting mosquitoes resting 
+or biting indoor \citep{2024.RA.FEO} and other innovative techniques such as spatial repellents, and attractive toxic sugar baits used as a complement 
+to ITNs an IRS \citep{2024.KE.TPF}. 
+\par
+Despite the effectiveness of control methods, some challenges, such as insecticide resistance development in targeted vector populations \citep{2024.IS.IRO, 2024.SA.MAP} or the migration of vector species to new areas such as \textit{Anopheles stephensi} (from south-east Asia to Africa \citep{2024.QI.PPS}) still persist. 
+Therefore, gaining a deeper understanding of vector populations and their behaviors is crucial for optimizing control and surveillance strategies development and deployment across different landscapes. 
+This understanding can be spanned into three key information categories, i.e., vector occurrence, vector bionomics, and insecticide resistance (IR). 
+Vector occurrence refers to information on the presence or absence of vectors in specific locations, which helps in deploying control strategies \citep{2010.ME.TDA, 2022.MI.UOA}. 
+This type of data can be obtained from the Global Biodiversity Information Facility (GBIF) \citep{2011.AN.BIG}. 
+Vector bionomics data aid in understanding behavioral patterns of specific vectors, such as preferred biting times, host preferences, and resting preferences. 
+These insights are essential for predicting changes in vector behavior and adapting control and monitoring strategies \citep{2024.MA.MVB, 2024.BR.ROD, 2024.DE.SDR}. Finally, insecticide resistance refers to the capacity of vectors to resist insecticides used over time. 
+IR data have been gaining increasing importance, especially in decision support or in designing more efficient control and surveillance measures to be deployed \citep{2024.EA.IAC, 2024.AI.MIR, 2024.AI.IOT}. 
+IR data can be retrieved from the IRMapper online platform, a public database on insecticide resistance \citep{2014.TB.AOT}. 
+\par	
+However, not all the available data on vectors is in a structured and ready-to-use format for analysis and modeling purposes, which are important tools in decision support and policy making. 
+Generally, available data can be categorized as structured data, semi-structured data, and unstructured data, which represent the largest portion; approximately 85\%  \citep{2016.AC.UDA}. 
+The field of vector-borne disease is not exempt from this proportion; therefore, it is important to explore this vast amount of unstructured data and derive valuable insights. 
+Structured data refers to data that has a definite format and length and is easy to store and analyze with a high degree of organization \citep{2016.AC.UDA, 2024.YI.MIG}. 
+A typical example of this type of data is relational databases. 
+Semi-structured data is irregular data that may be incomplete and have a structure that changes rapidly or unpredictably but does not conform to a fixed or explicit schema, like extensible markup language (XML) files \citep{2016.AC.UDA, 2024.DA.ESI}. 
+Unstructured data on the other end has no particular structure, like emails, PowerPoint, portable document format (PDF), and text files. 
+\par
+Vast amounts of Malaria data (occurrence, bionomics, and IR) are enclosed in an unstructured format (such as published scientific articles). 
+Manual extraction and transformation of this data to analysis-ready structured data is time-consuming, with various skilled personnel required \citep{2012.ME.AGM, 2010.ME.TDA, 2016.NC.AGB}. 
+This study, therefore, addresses this challenge by harnessing natural language processing (NLP) techniques and common ontologies (which encapsulate domain knowledge in terms of domain concepts and relationships between these concepts) to develop an automatic data extraction pipeline to extract structured data from unstructured documents such as PDFs of 
+scientific articles. 
+We utilize optical character recognition (OCR) and large language models (LLMs), namely Google's Gemini \citep{2024.GE.G1U}, to develop a question answering approach to intelligently extract occurrence, bionomics, and IR data from published PDFs of scientific articles. 
+This data is then stored in a database for further analysis and modeling purposes. 
+Key contributions of our work include:
+\begin{itemize}
+\item Designing a novel information extraction pipeline to extract key data from a textual corpus, with a focus on PDF documents.
+\item Utilizing prompt engineering with LLMs to monitor knowledge triples extraction from PDF documents.
+\item Aligning extracted data using knowledge graphs which encapsulate domain knowledge or, more precisely, the information of interest.
+\item Creating a user-friendly software incorporating this pipeline, allowing customizations and tuning for various information extraction tasks.
+\item Evaluating the proposed tools by extracting and analyzing \textit{Anopheles funestus} occurrence, bionomics, and IR data from published literature.
+\end{itemize}
+\par
+In the following sections, Section \ref{sec:related_works} details related works, Section \ref{sec:method} presents our methodology, Section \ref{sec:results} showcases our results, Section \ref{sec:discussion} we discuss our findings, and section \ref{sec:conclusion} concludes our work.
+
+
+\section{Related works}\label{sec:related_works}
+\subsection{State of the art on IE from text}
+\par 
+Information extraction (IE) has witnessed remarkable advancements, driven by developments in natural language processing and the availability of large-scale pre-trained language models. 
+State-of-the-art IE systems excel in extracting structured information such as named entities, relationships, events, and other semantic details from unstructured text. 
+For example, models such as bidirectional encoder representations from transformers (BERT) \citep{2019.JA.BPO}, generative pretrained transformers (GPT)-4 \citep{2024.OP.GTR}, Gemini \citep{2024.GE.G1U}, or Llama2 \citep{2023.HU.LOA} have demonstrated significant improvements in capturing contextual information, enabling precise entity recognition and relationship detection. 
+These models leverage self-supervised pretraining on vast corpora, followed by fine-tuning on specific tasks, to deliver state-of-the-art performance. 
+Emerging tools such as Hugging Face Transformers have further streamlined the integration of such models into IE pipelines, supporting IE in a wide range of domains from healthcare \citep{2023.JA.EIE} to legal document analysis \citep{2024.GU.CLA}.
+\par
+Recent research has also emphasized the importance of multi-modal and cross-lingual capabilities in IE systems. 
+Multi-modal IE combines textual data with images, audio, or video to provide richer contextual understanding, as seen in works such as VisualIE \citep{2023.HA.VRI}, which integrates visual information for improved entity and relationship extraction. 
+Cross-lingual IE systems, leveraging models such as XLM-R \citep{2019.AC.UCR}, aim to address the challenges of extracting information from texts in multiple languages. These approaches have demonstrated effectiveness in low-resource languages by using transfer learning techniques and multilingual embeddings, making IE accessible and impactful in diverse linguistic settings.
+\par
+Future directions for IE include improving explainability, adaptability, and real-time processing capabilities. 
+Explainable artificial intelligence (AI) in IE is gaining traction, with models designed to highlight why specific entities or relationships are extracted, helping end-users in decision making \citep{2023.SU.GSC}. 
+Adaptive IE systems aim to dynamically adapt to new domains or evolving data, minimizing retraining costs and maximizing efficiency \citep{2023.AM.ATP}. 
+Moreover, the integration of IE into streaming data applications, such as social media monitoring and financial forecasting, requires innovations in processing speed and scalability. 
+These advancements highlight the ongoing evolution of IE as a cornerstone of AI applications across industries.
+
+\subsection{Ontologies usage in information extraction}
+\par
+Ontologies play a pivotal role in IE by providing structured semantic frameworks that guide the process of extracting meaningful information from unstructured text. 
+Ontologies define domain-specific concepts, relationships, and attributes, creating a shared understanding of knowledge that machines can interpret and utilize \citep{1993.TO.WIA}. 
+By embedding ontological knowledge into IE systems, these tools can achieve higher accuracy in identifying relevant entities and relationships, as well as in disambiguating terms that have multiple meanings. 
+For example, Gene Ontology has been widely used in biomedical IE tasks to extract gene-related information from research articles, ensuring semantic consistency across extracted data \citep{2000.MI.GOT, 2016.FE.AHO, 2021.GO.AOF}.  
+\par
+In practice, ontologies improve both rule-based and machine learning-based IE methods \citep{2025.SD.ARO}. 
+Rule-based approaches leverage ontology-driven templates and patterns to identify domain-specific information, which is particularly useful in domains with well-defined structures, such as legal or medical texts \citep{2021.BR.AON}. 
+Meanwhile, machine learning models benefit from ontological features during training, as these features encode domain knowledge and improve model interpretability and performance. 
+Recent advances in hybrid approaches combine machine learning with ontology-driven reasoning, enabling IE systems to incorporate logical inference for more robust and context-aware extractions \citep{2024.JG.ACA}. 
+Ontologies such as DBpedia \citep{2007.SO.DAN} and Yago \citep{2008.FM.YAL} have been instrumental in general-purpose IE, facilitating knowledge graph construction and entity linking from vast text corpora \citep{2018.SO.TAK, 2020.DI.KG}.  
+\par
+Looking forward, the integration of ontologies with modern neural networks and large language models presents exciting opportunities for IE. 
+Ontology-enhanced embeddings are being developed to incorporate semantic knowledge directly into the input features of neural models, improving their ability to generalize across tasks \citep{2022.NA.TAG}. 
+Furthermore, ontologies are increasingly being used in cross-lingual IE to provide consistent conceptual frameworks between languages, addressing challenges posed by linguistic diversity \citep{2019.SH.FMT, 2013.JO.NLP, 2016.MA.ICO}. 
+As ontologies continue to evolve, their role in IE is expected to grow, particularly in enabling explainability, domain adaptation, and integration with multi-modal data sources. 
+This underscores their significance in the future of semantic information extraction.
+
+
+\section{Method}
+\label{sec:method}
+To extract target information from PDF documents, we propose a flexible approach inspired by surveys \citep{2004.FR.WIA} and graph theory \citep{2008.JA.GT} (see Figure \ref{fig:overview}). 
+This method takes as input a set of predefined questions (questionnaire), a knowledge graph representing the key concepts to be extracted, and the documents from which data will be retrieved. 
+We refer to this graph as the base knowledge schema. 
+The initial and essential steps of our approach involve designing both the questionnaire and the base knowledge schema. 
+The extraction process begins with (c) extracting and cleaning text from PDF documents. 
+Next, (d) prompts are generated using the extracted text as context, automatically incorporating the pre-defined questions through prompt engineering. 
+These prompts are then fed to the large language model (e) to extract the knowledge triples (f). 
+Following this, (g) a classification stage aligns the extracted knowledge with the base knowledge schema, leveraging prompt engineering, LLM capabilities, with custom data alignment algorithms. Finally, (h) the extracted and aligned data are converted into a comma-separated value (CSV) document for further analysis.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/aie_method_overview.png}
+\caption{Overview of the proposed approach, illustrating key steps, from information inputs, to processing, to the production of the final desired output as a CSV document suited for subsequent analysis.}
+\label{fig:overview}
+\end{figure}
+
+\subsection{Data collection}
+\par 
+This study gathered data on Malaria from published literature using online scholarly databases from PubMed and Web of Science. 
+An advanced search was performed to identify relevant articles, following the queries described in Table \ref{tab:data_collection}. 
+The search used specific keywords alongside predefined inclusion and exclusion criteria. 
+Consequently, a collection of 394 unique PDF documents related to \textit{Anopheles funestus} in Africa was obtained.
+
+\begin{table}[ht]
+\centering
+\caption{Queries and selection criteria used to filter published literature.}\label{tab:data_collection}
+\small
+\begin{tabular}{p{0.12\linewidth}|p{0.35\linewidth}|p{0.2\linewidth}|p{0.2\linewidth}}
+\toprule
+\textbf{Scholar database} & \textbf{Query} & \textbf{Inclusion} & \textbf{Exclusion} \\
+\midrule
+Web of Science & (ALL=(Anopheles funestus)) AND ALL=(Africa). Initial results: 368 records & \* not a review \* is open access & \* is a review \* is not open access \\
+\cmidrule(lr){1-2}
+PubMed & Query: ((Anopheles funestus) OR (funestus)) AND (Africa) \* Initial results: 1038 records \* Filters applied: Free full text, Case Reports, Classical Article, Clinical Study, Clinical Trial, Comparative Study, Dataset, English Abstract, Evaluation Study, Historical Article, Letter, Observational Study, Technical Report, Validation Study, English \* Final count: 63 records & & \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Text extraction}
+\par 
+PDF documents exhibit a wide range of formats and structures, from content-rich files containing images, tables, and annotations to simpler ones composed of text. 
+This study focused on extracting only the raw textual content from PDF documents, acknowledging the varying capabilities and accuracy of existing extraction tools and libraries. 
+The performance of these tools differs significantly based on whether the document is digitally generated or scanned from a physical copy. 
+Given this context, our text extraction approach integrates Optical Character Recognition (OCR) for scanned documents and Python-based PDF text extraction libraries \citep{2024.PY.P5D} for digitally created files. 
+This combination was driven by the difference in processing time between OCR tools and direct text extraction methods. 
+To efficiently process a large volume of documents in a reasonable timeframe, we prioritized direct text extraction whenever possible, reserving OCR for cases where text was embedded within images.
+\par 
+Our text extraction process involved two primary steps (see Figure \ref{fig:pdf_preprocessing}): (i) identifying whether the PDF document was digital (machine-readable) or scanned (image-based) and (ii) selecting and applying the most suitable extraction algorithm to optimize text retrieval in terms of processing time. 
+For scanned PDFs, where text is embedded within images rather than being directly selectable, our approach consisted of segmenting the document into individual pages, converting each page into an image, and processing these images with the Tesseract OCR engine \citep{2007.RA.AOO} to extract textual content. 
+As an open-source OCR tool, Tesseract converts image-based text into a machine-readable format while maintaining accuracy. 
+Once all pages were processed, the extracted text was concatenated to reconstruct the entire document. 
+For digital PDFs, a similar approach was used, but instead of OCR, we used the PyPDF library for text extraction. 
+The document was first divided into separate pages, each page being processed using PyPDF, which directly retrieved text without requiring character recognition, thereby preserving formatting and reducing errors. 
+Finally, the extracted text from all pages was merged into a single coherent document. 
+This structured methodology ensured efficient processing of both scanned and digital documents, enabling accurate text retrieval while minimizing errors related to character recognition and formatting.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/aie_text_extraction_overview.png}
+\caption{Overview of the PDF document text extraction approach, showcasing and hybrid pipeline for handling both scanned and digitally produced PDF documents, transforming a PDF document to a valid text document.}
+\label{fig:pdf_preprocessing}
+\end{figure}
+
+\subsection{Questionnaire and base knowledge schema}
+A questionnaire is a collection of natural language questions designed to guide the LLM in extracting relevant information from text. 
+The base knowledge schema, on the other hand, is a graph in which each node represents a concept class of interest, and each edge defines a relationship between these concept
+classes. 
+However, rather than a single label, each relationship is represented as a list of synonymous terms to account for variations in expression (see Figure \ref{fig:base_k-struct}). 
+In practice, we utilize JavaScript Object Notation (JSON) files to serialize the base knowledge schema.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/aie_base_kg.png}
+\caption{Base knowledge graph structure in (a) with concept classes A and B, and associated metadata table in (b) with the relationships between concept classes.}
+\label{fig:base_k-struct}
+\end{figure}
+
+% \subsection{Prompt Engineering}
+
+\subsection{Integrating large language models}
+\par
+To achieve our objective, we explored two state-of-the-art LLMs: Gemini 2.5 \citep{2024.GE.G1U} from Google and LLaMA2 \citep{2023.HU.LOA}
+from Meta (formerly Facebook). 
+While both models were freely accessible, differences in computing resource requirements influenced our choice. 
+We chose Gemini as our preferred model because it is hosted in the cloud and freely accessible, ensuring reasonable processing times. 
+In contrast, LLaMA2 was deployed locally for unrestricted use on a machine with 32 GB of random-access memory (RAM) and an Nvidia T400 graphics processing unit (GPU), which imposed certain computational limitations. 
+Both models support a context window of at least 4,096 tokens, sufficient for processing most scientific articles. 
+However, Gemini has the advantage of exceeding this context limit, allowing it to handle larger documents \citep{2024.GE.G1U}.
+
+% \begin{figure}[htb]
+	%     \centering
+	%     \includegraphics[width=\linewidth]{figs/aie_approach_overview.png}
+	%     \caption{Overview of the proposed approach, illustrating key steps, from information inputs, 
+	%to processing, to the production of the final desired output as a CSV document suited for subsequent analysis.}
+	%     \label{fig:overview}
+	% \end{figure}
+
+\subsection{Knowledge triples extraction}
+\par 
+Knowledge triples are the foundational building blocks of knowledge graphs introduced by Google in 2012 \citep{2017.SH.MAO}. 
+It is a data structure consisting of three elements, typically represented as (subject, predicate, object). 
+In this structure, the subject and the object represent concepts, while the predicate defines the relationship between them \citep{2017.SH.MAO}. 
+In our pipeline, we approach the extraction of these triples as a process of extracting factual information from text. However, since a single text can contain hundreds of facts, we guide the language model by providing it with a predefined set of questions (our questionnaire). 
+These questions activate the model's question-answering capabilities, allowing it to focus on extracting relevant information within its domain of interest. 
+In practice, we design a prompt template for the language model that incorporates the questions and the context (see Table \ref{tab:kt_extraction_tab}).
+
+\begin{table}[ht]
+\centering
+\caption{Knowledge triples extraction generic prompt template, where the context refers to the text to analyze the questionnaire refers to our set of questions.}
+\label{tab:kt_extraction_tab}
+\begin{tabular}{p{0.95\linewidth}}
+\toprule
+\textbf{PROMPT} \\ 
+\midrule
+Extract knowledge triples as (subject, predicate, object) from the provided context 
+in relation to the following questions: \\ \\
+\{questionnaire\}  \\ \\
+context: \\ \\
+\{context\} \\ 
+\bottomrule
+\end{tabular}
+\end{table}
+
+
+\subsection{Knowledge alignment, filtering, and conversion to CSV files}
+\par 
+Since a simple list of knowledge triples is not easily usable for statistical analysis or downstream tasks such as modeling, we sought a structured approach to reformat this knowledge. This is where the base-knowledge schema comes into play. 
+Its primary role is to define the concept classes of interest and the relationships that exist between them (see Figure \ref{fig:base_k-struct}). 
+Once the initial knowledge triples are extracted from raw text, they are aligned using Algorithm \ref{algo:align}. 
+This alignment process ensures that only relevant triples are retained and that identified concepts and relationships are consistently relabeled, enhancing their usability and coherence with our extraction goals. 
+The alignment process is also LLM-assisted in the sense that the language model is used to accurately reclassify the extracted concepts with the concept classes in the base knowledge schema; this is done with the prompt presented in Table \ref{tab:kt_classification_tab}. 
+\par
+After the alignment and filtering steps, the final knowledge graph is transformed into a CSV file. 
+The columns in this file correspond to the concept classes defined in our base knowledge schema, while the rows are populated with concept values extracted by traversing the knowledge graph through the list of aligned and filtered knowledge triples.
+
+\begin{table}[ht]
+\centering
+\caption{Prompt for LLM-based classification of extracted concepts from texts, where \textit{query} is a list of couples with the available list of classes from the base knowledge schema, and the concept to classify (classes, concept).}\label{tab:kt_classification_tab}
+\small
+\begin{tabular}{p{0.95\linewidth}}
+\toprule
+\textbf{PROMPT} \\ 
+\midrule
+Classify the following concepts with one of the provided candidate classes only 
+without any additional comment in the format concept, class: \\ \\
+\{query\}  \\ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{algorithm}[H]
+\caption{Knowledge triples alignment to base knowledge schema}\label{algo:align}
+\hspace*{\algorithmicindent} \textbf{Input}: $ \mathcal{G}_e $  \Comment{Extracted knowledge triples}\\
+\hspace*{\algorithmicindent} \textbf{Input}: $ \mathcal{G}_{kb} $ \Comment{Base knowledge schema}
+\begin{algorithmic}[1]
+\Procedure{AlignData}{$\mathcal{G}_e, \mathcal{G}_{kb}$}
+\State $r\gets \{\}$
+\State $classes \gets extract\_concept\_classes(\mathcal{G}_{kb})$
+\For{$ (s, p, o) \in \mathcal{G}_e $}
+\State  $ s\_class = llm\_classify(classes,  s)$
+\State  $ o\_class = llm\_classify(classes,  o)$
+\State  $ predicate\_val =  \newline get\_base\_knowledge\_predicate\_if\_exists(s\_class, o\_class)$
+\State $r.push(\{s\_class: s, o\_class: o, predicate: predicate\_val \})$
+\EndFor
+\State \Return $r$
+\EndProcedure
+\end{algorithmic}
+\end{algorithm}
+
+
+\subsection{Extraction pipeline evaluation}
+\par 
+The proposed approach was evaluated through a case study focused on extracting \textit{Anopheles funestus} data from published literature, with the primary objective of evaluating the reliability of the information extraction pipeline. 
+To achieve this, we conducted an experiment that involved 394 PDFs of published articles on the topic and created a structured questionnaire. 
+In addition, a base knowledge schema was designed (see Figure \ref{fig:aie_base_ke}), as input into the automated extraction pipeline. 
+After completion of the extraction process, the results were evaluated against established domain knowledge, specifically referencing the work of \citep{2012.ME.AGM} and data from the Vector Atlas platform on \textit{Anopheles funestus} \citep{2025.VE.VAP}. 
+\par
+The Vector Atlas project is creating a centralized data hub to compile, standardize, and link critical information on African disease vectors, including their occurrence, biology, and insecticide resistance. It updates and expands existing core datasets by systematically gathering data from published and unpublished sources. 
+The goal is to provide a single, comprehensive resource for accessible and interconnected data, extending its coverage from primary to important secondary mosquito species involved in ongoing malaria transmission.
+\par
+For this comparison, the centroid method was employed; coordinates of \textit{Anopheles funestus} occurrences were obtained from the Vector Atlas, and their geographic centroid was calculated. 
+The same procedure was applied to the automatically extracted data, and the distance between the two centroids was measured to assess spatial consistency using the Haversine formula \citep{2013.NR.LBS} to take into account the curvature of the Earth.
+\par 
+Our extraction efforts focused on extracting references from studies (title, authors, year), coordinates of study sites and country, occurrence of vector species, resting and biting behavior of vector species (bionomics), the control method used if available, and the type of insecticide resistance if reported in the study. 
+The associated questionnaire was composed of the questions presented in Table \ref{tab:questionnaire}.
+\par
+In addition to the above, we employed a MaxEnt model to generate a habitat suitability map for the \textit{Anopheles funestus} mosquito across Africa. 
+MaxEnt is a presence-only species distribution model, among the most popular in the scientific community, as supported by \citep{2021.SA.SDM}. 
+Considering the sensitivity of \textit{Anopheles funestus} to environmental conditions such as temperature and precipitation, as sustained by 
+\citep{2016.NC.AGB, 2012.ME.AGM}, these variables were considered as the foundation of our model. 
+We then developed a model in Python v3.11 using the elapid package \citep{2023.CB.ESD}. We used bio-climatic variables data, bio1(Annual mean temperature [°C*10]) 
+and bio12 (Annual precipitation [mm/year]), at 1 km spatial resolution, sourced from CHELSA Version 2.1 \citep{2017.DN.CAH} to run our model.
+
+\begin{table}[ht]
+\centering
+\caption{Data extraction questionnaire.}\label{tab:questionnaire}
+\begin{tabular}{p{0.05\linewidth}|p{0.88\linewidth}}
+\toprule
+&\textbf{Question} \\ 
+\midrule
+1 & What is the study title? \\
+\midrule 
+2 & Who is the first author of the study? \\
+\midrule
+3 & What year was the study published? \\
+\midrule
+4 & What are the study sites this study focused on? \\
+\midrule 
+5 & What country are these study sites from? \\
+\midrule 
+6 & What were the latitude and longitude of each study site, state n/a in not reported in the study? \\
+\midrule 
+7 & What individual disease vector species were reported in each study site, if is? \\
+\midrule
+8 & what disease or diseases were reported to be caused by each identified vector species? \\
+\midrule
+9 & Did the vector or vectors bite indoors or outdoors, if reported? \\
+\midrule 
+10 & Did the vector or vectors rest indoors or outdoor, if reported? \\
+\midrule
+11 & what control method was reported in each study site, if there is? \\
+\midrule
+12 & Was insecticide resistance reported? If yes, what type of resistance? \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering    
+\includegraphics[width=\linewidth]{figs/aie_malaria_base_ke_design.drawio.png}
+\caption{\textit{Anopheles funestus} automatic data extraction base knowledge schema.}
+\label{fig:aie_base_ke}
+\end{figure}
+
+\subsection{Deployment}
+\par
+The automatic data extraction pipeline was packaged as a web application to facilitate its usage and evaluation. 
+This application was built with various technologies to support the front- and back-end needs. 
+Within the system, every extraction activity can be defined as a project. 
+Each project has a set of configurations that corresponds to the inputs needed for data extraction. 
+As such, for each project, we have a questionnaire, a base knowledge schema, a folder to store all the PDF files, various other folders to store the results of the extraction at each stage (extracted text in .txt files, extracted knowledge in .json files, aligned knowledge in .json files, and final data in .csv files).
+\par
+The backend of the system was build using popular Python frameworks, namely FastAPI\citep{2025.FA.FOD} for API development, SQLAlchemy for easy database object relational mapping (ORM) management, Alembic \citep{2025.AL.AOD} for easily managing database migrations. 
+The Frontend, on the other hand was build using the VueJs framework \citep{2025.VU.VD} combined with the VuefityJS \citep{2025.VU.VJD} component library for it range of user interface components, allowing the development of complex and interactive interfaces. 
+Beside the frontend and backend, the system deployment itself featured the usage of containerization technologies, namely Docker and Docker Compose, to orchestrate the application 
+deployment and load balancing through nginx\citep{2025.NG.NOD}. 
+The proposed web application was named NARRATOR, which is an anagram of TARNORAR, itself standing for TARget kNOwledge extRActor and BrowseR, embodying the main objectives of the software. 
+It can be accessed at \url{https://narrator.voidmonad.com/}.
+
+
+\section{Results}
+\label{sec:results}
+\par 
+The collected 394 articles spanned from 2003 to 2025, with a notable pick in 2024 as shown in Figure \ref{fig:yearly_distro}. 
+These articles were then provided as input to the extraction pipeline, which extracted occurrence, bionomics (biting and resting behaviors more precisely), and resistance data.  
+Table \ref{tab:summary_bio_ir} summarizes the bionomics and resistance information that was extracted from the articles. 
+More precisely, it presents the common biting and resting locations that the pipeline was able to extract, in addition to the different resistance mechanisms identified across studies.
+\par 
+In addition, we compared our outputs to the data manually abstracted and published on the vector atlas platform over the same period (2003 – 2025) on \textit{Anopheles funestus} using centroid and Haversine Formula. 
+This comparison resulted in a 572.0239 Kilometers (km) difference between the centroids of the two datasets. 
+The side-by-side occurrence maps of the two datasets are shown in Figure \ref{fig:side_by_side_auto_manual}.
+\par
+Furthermore, the extracted occurrence data was used to run a species distribution model, which resulted in the output shown in Figure \ref{fig:aie_an_funestus}, 
+showcasing the suitability map of \textit{Anopheles funestus} in Africa.
+\par
+We also recorded the processing time of each of the key steps of our pipelines (text extraction, knowledge extraction, knowledge alignment) on each processed documents. 
+This allowed us to calculate the average processing time for each step of the pipeline as summarized in Table \ref{tab:kt_extraction_time_tab}.
+
+\par
+The developed web application facilitated the collection of a variety of information on the extraction pipeline, such as the processing time at each stage or the final output of the automatic extraction. 
+Figure \ref{fig:narrator_ui} presents an insight into the developed web application, showing the overview of a given project represented in the system, with the questionnaire, the base knowledge schema, the project files, and the extracted data represented as tabs for easy navigation. The data tab allows the user to download the extracted data as CSV for downstream processing (see Figure \ref{fig:narrator_data}).
+
+\begin{figure}[H]
+\centering    
+\includegraphics[width=\linewidth]{figs/yearly_distro.jpg}
+\caption{Yearly distribution of the selected 394 Studies.}
+\label{fig:yearly_distro}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{Summary of extracted bionomics and IR data with the automatic data extraction pipeline.}\label{tab:summary_bio_ir}
+\small
+\begin{tabular}{
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.13\linewidth}|
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.13\linewidth}|
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.16\linewidth}|
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.13\linewidth}|
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.13\linewidth}|
+>{\raggedright\arraybackslash\hspace{0pt}}p{0.13\linewidth}
+}
+\toprule
+\multicolumn{4}{c|}{\textbf{Bionomics}} &
+\multicolumn{2}{c}{\textbf{Insecticide Resistance}} \\ 
+\midrule
+\textit{Resting location} &
+\textit{Studies count} &            
+\textit{Biting location} &
+\textit{Studies count} &
+\textit{IR mechanism} &
+\textit{Studies count} \\  
+\midrule
+indoor & 18 & indoor & 44 & ddt & 9 \\
+\midrule
+outdoor & 6 & outdoor & 17 & kdr & 1 \\
+\midrule
+endophilic & 7 & endophilic & 2 & metabolic resistance & 4 \\
+\midrule
+living and sleeping areas of houses huts & 1 & inside human dwellings & 1 & pyrethroid resistance & 28 \\
+\midrule
+&  & antropophilic & 2 & & \\
+\bottomrule
+\end{tabular}
+\end{table} 
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/side_by_side_maps.png}
+\caption{Side by side overview of \textit{Anopheles funestus} occurence maps. A is the occurrence distribution
+of \textit{Anopheles funestus} downloaded from the Vector Atlas platform (315 records). B is the occurrence map
+of \textit{Anopheles funestus} automatically extracted using the proposed methodology (129 records).}
+\label{fig:side_by_side_auto_manual}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[scale=0.33]{figs/Maxent_Model_Weighted_pd_projection.jpg}
+\caption{Overview of \textit{Anopheles funestus} sutiability maps based on the automatically extracted data and the MaxEnt model. In this figure, colors gradually range from blue to red; the more redish the area, the more suitable it is to \textit{anopheles funestus}, and the more blueish the area is, the less suitable it is.}
+\label{fig:aie_an_funestus}
+\end{figure}
+
+\begin{table}[ht]
+\centering
+\caption{Average processing time on each data extraction stage}
+\label{tab:kt_extraction_time_tab}
+\small
+\begin{tabular}{p{0.63\linewidth}|p{0.3\linewidth}}
+\toprule
+\textbf{Pipeline Step} &
+\textbf{Averge time (s)} \\	
+\midrule
+Text extraction from PDFs & 1.45431472081218 \\ 
+\midrule
+Knowledge extraction from the text & 5.25380710659899 \\
+\midrule
+Data alignment on each document & 6.45431472081218 \\ 
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/narrator_ui.png}
+\caption{Overview of the project details interface from the NARRATOR software. We can navigate the project data, such as the questionnaire, the project files, the base knowledge schema, or the extracted data, through the provided tab view. Actionable buttons are also provided to run the extraction or update project configuration easily.}
+\label{fig:narrator_ui}
+\end{figure}
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\linewidth]{figs/narrator_data_2.png}
+\caption{Overview of the data viewer interface for a given project. Here, the user can view and download the extracted data in CSV for further processing.}
+\label{fig:narrator_data}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+%\subsection{Overview of key findings}
+\par 
+This study presented a novel methodology for the automated extraction of structured data from unstructured documents, with a case study on the extraction of occurrence, bionomics, and insecticide resistance data from the Malaria vector \textit{Anopheles funestus} from the published literature. 
+The proposed approach leveraged large language models, graph data structure, and prompt engineering to frame information extraction as a flexible question-answering task. 
+We successfully applied this pipeline to a corpus of studies published between 2003 and 2025, allowing the retrieval of several data points on vector occurrence, bionomics, and insecticide resistance.
+\par 
+The developed pipeline produced an initial result of 24,480 records, from which we extracted 4,243 valid geo-referenced records. 
+These 4,243 records amounted to 129 distinct valid geo-referenced locations. 
+Once mapped, these data were closely aligned with established domain knowledge, as demonstrated by two key comparisons. 
+Firstly, the centroid of our extracted occurrence points was only 572.02 kilometers away from the centroid of the data published on the Vector Atlas platform \citep{2025.VE.VAP}. 
+Given the continental scale, this distance is negligible and validates the accuracy of our extraction process. 
+Secondly, the species distribution map generated by our MaxEnt model (Figure \ref{fig:aie_an_funestus}) was highly consistent with the global distribution maps of the main malaria vectors previously published in \citep{2012.ME.AGM}. 
+This strong concordance comforts us in the reliability of our data extraction for \textit{Anopheles funestus} occurrence.
+\par 
+Beyond simple occurrence, our methodology successfully extracted more nuanced information on vector behavior and resistance. 
+The extracted bionomics data confirmed that \textit{Anopheles funestus} is predominantly an endophilic (indoor-resting) and anthropophilic (human-biting) mosquito that bites primarily at night. 
+Most of the studies extracted reported indoor resting and biting behavior, which is consistent with the known biology of this vector \citep{2024.AJ.TBO, 2025.GR.STI}. 
+While a large portion of the extracted data showed "unknown" resting behavior, this most likely reflected a limitation in either the original reporting within the source texts or the current pipeline's inability to interpret information presented in figures and tables.
+\par 
+The pipeline also proved to be effective in extracting insecticide resistance information. 
+Our results showed that resistance to DDT and pyrethroids, as well as metabolic and knockdown resistance (KDR), were the most frequently reported types of resistance. 
+This is consistent with the widespread knowledge of the domain, as pyrethroids are the main class of insecticides used in long-lasting insecticidal nets, and DDT has been used for indoor residual spraying (IRS) for decades \citep{2023.HO.DOI, 2017.KG.RTG, 2020.NA.IOA}. 
+The ability to map these resistance locations demonstrates the pipeline's potential to aid in creating near-real-time surveillance tools.
+
+%\subsection{Comparison with existing methods and limitations}
+\par 
+The proposed methodology not only enhances efficiency relative to traditional manual data abstraction but also
+ advances the investigation of LLM-based approaches for automated data extraction across different natural language 
+ document formats, consistent with recent research efforts \citep{2025.DE.APF, 2024.AL.EIC, 
+ 2025.SI.DAE, 2024.LU.ANA}. For instance, our pipeline processed 394 documents in approximately 1.44 hours, 
+ whereas traditional methods, such as those described by \citep{2016.NC.AGB}, are considerably more time-consuming. 
+On average, our system spent 2 seconds extracting text, 6 seconds extracting knowledge triplets, and 7 seconds 
+aligning knowledge per document, totaling approximately 15 seconds per document.
+\par
+While our results are promising, the pipeline still has inherent limitations. 
+The accuracy is highly dependent on the quality of the input text, the design of the base knowledge schema, and 
+the prompts used. A significant number of records (over 20,000) were filtered out because they were either for 
+other vector species or lacked geo-reference information. We also noted that our pipeline, like other LLM-based 
+systems, is currently unable to extract information from images and tables, which are often rich sources of data 
+in scientific papers.
+\par
+Furthermore, a small number of extracted occurrence points fell outside the predicted distribution of 
+\citep{2012.ME.AGM}. While this could be due to minor inaccuracies in our pipeline, it could also represent 
+genuine ecological shifts in vector populations. The migration of mosquito species is a documented phenomenon 
+influenced by factors like climate change and deforestation, which alter vector habitats and ranges 
+\citep{2024.EA.IAC, 2025.GR.STI}.
+
+%\subsection{Broader implications and future directions}
+\par 
+Our study demonstrates the versatility of an LLM-agnostic question-answering framework for information extraction. 
+Unlike previous approaches that required extensive domain-specific datasets for fine-tuning, such as the methods 
+used in \citep{2022.VA.ATE} for the extraction of plant species data or in \citep{2022.TA.MAM} 
+for the extraction of material names, our system is flexible and adaptable to various domains by simply modifying the 
+questionnaire and the base knowledge schema. 
+Moreover, its ability to process large batches of documents differentiates it from existing AI-powered tools such as 
+ChatGPT \citep{2024.OP.GTR}, Claude \citep{2024.LO.C2L}, and ChatPDF \citep{2024.AS.RDS}, 
+making it well suited for systematically processing large batches of documents at once for data extraction.
+\par 
+Future work will focus on addressing current limitations. We plan to integrate additional features to process 
+public common ontology, such as those published on the BioPortal platform (\url{https://bioportal.bioontology.org/}) 
+and automatically convert them to the base knowledge schema, to reduce the need for manual schema definition and 
+improve extraction precision and versatility. 
+We also intend to explore methods for extracting information from figures and tables, such as document semantic 
+segmentation models, to classify different content types within PDF documents. 
+This can significantly enhance the accuracy and precision of the pipeline.
+\par 
+The proposed solution can be considered as a foundational framework for scalable and customizable data extraction 
+from PDF documents, offering a novel tool to researchers and analysts in data-intensive fields, which closely aligns 
+with the architecture proposed in \citep{2025.SD.ARO}, combining LLMs and common ontologies.
+
+\section{Conclusion}
+\label{sec:conclusion}
+Leveraging state-of-the-art natural language processing techniques, we designed an information extraction 
+pipeline (available at \url{https://narrator.voidmonad.com/}) to automate the systematic extraction of 
+specific data from large volumes of PDF documents, utilizing LLMs, graph data structures, and prompt 
+engineering. The proposed pipeline employs a hybrid PDF text extraction approach, combining Tesseract 
+for OCR and PyPDF for digital text extraction, while leveraging large language models for accurate 
+interpretation. We were able to extract valuable information on \textit{Anopheles funestus} from the 
+published literature, such as the geo-referenced occurrence of the vectors, their resting and biting 
+behavior, as well as a few reported resistance mechanisms. The extracted data aligned closely with the 
+knowledge of the domain, demonstrating the potential of the proposed method. However, we encountered 
+several challenges, particularly during pre-processing. Extracting clean text from PDFs was a challenge, 
+due to noise such as footnotes, tables, and images misinterpreted as text by Tesseract, which led to 
+ambiguity and reduced extraction accuracy. To address this, we aimed to implement a document semantic 
+segmentation model to classify different content types within a PDF document. This would enable more 
+precise extraction by filtering out irrelevant elements, thereby improving data quality. This enhancement 
+represents a promising research direction, which we plan to explore further. Additionally, the automatic 
+integration and conversion to the base knowledge schema of public common ontologies, such as those from the 
+BioPortal platform, is another area of improvement on which we wish to work. As the next step, we will 
+conduct more case studies, applying our methodology to extract and analyze relevant information from the 
+scientific literature in various domains. This will not only further validate our approach but also provide 
+new insights for iterative improvements.
+
+\section*{Author Contributions}
+SDA: Conceptualization, Data Curation, Formal Analysis, Investigation, Methodology, Validation, Visualization, 
+Writing - Original Draft, Writing - Review \& Editing. 
+HT: Conceptualization, Data Curation, Formal Analysis, Funding Acquisition, Investigation, Methodology, 
+Resources, Supervision, Validation, Visualization, Writing - 
+Original Draft, Writing - Review \& Editing. KS: Conceptualization, Data Curation, Formal Analysis, Funding 
+Acquisition, Investigation, Methodology, Resources, 
+Supervision, Validation, Visualization, Writing - Original Draft, Writing - Review \& Editing. MW: 
+Conceptualization, Data Curation, Formal Analysis, Funding Acquisition, 
+Investigation, Methodology, Resources, Supervision, Validation, Visualization, Writing - Original Draft, 
+Writing - Review \& Editing. KA: Supervision, Validation, 
+Visualization, Writing - Review \& Editing. JO: Conceptualization, 
+Data Curation, Formal Analysis, Funding Acquisition, Investigation, Methodology, Resources, Supervision, 
+Validation, Visualization, Writing - Original Draft, Writing - 
+Review \& Editing.
+
+\section*{Funding}
+The authors gratefully acknowledge the financial support for this research by the following organizations and 
+agencies: the Swedish International Development Cooperation 
+Agency (Sida); the Swiss Agency for Development and Cooperation (SDC); the Australian Centre for International 
+Agricultural Research (ACIAR); the Government of Norway;
+the German Federal Ministry for Economic Cooperation and Development (BMZ); and the Government of the Republic 
+of Kenya. The views expressed herein do not necessarily reflect the official opinion of the donors.
+
+\section*{Declaration of competing interest}
+The authors declare no potential conflict of interests.
+
+\section*{Data Availability}
+The data supporting the findings of this study were made available in a GitHub repository accessible 
+at \url{https://doi.org/10.60798/4Q8D-XS25}, \citep{2025.SD.GAD}. It includes the data automatically 
+extracted by our pipeline, the manually extracted data derived from the Vector Atlas platform accessible 
+at \url{https://vectoratlas.icipe.org}, the sets of scientific articles that were filtered from published 
+literature, and the data analysis Python notebook.
+
+
+\bibliographystyle{apalike}
+\bibliography{bibliography.bib}
+
+
+\end{document}

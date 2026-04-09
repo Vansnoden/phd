@@ -1,0 +1,501 @@
+\documentclass{article}
+\usepackage{blindtext}
+\usepackage{geometry}
+\usepackage{graphicx}
+\graphicspath{{./figs/}}
+\usepackage{multirow, multicol, longtable}
+\usepackage{url}
+\usepackage[colorlinks=true, linkcolor=blue, citecolor=blue, urlcolor=blue]{hyperref}
+\geometry{
+	a4paper,
+	total={170mm,257mm},
+	left=20mm,
+	top=20mm,
+}
+\usepackage[authoryear]{natbib} 
+\usepackage{longtable}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{anyfontsize}
+\usepackage{lineno}
+\usepackage{authblk}
+\usepackage{float}
+\linenumbers
+\usepackage{setspace}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{siunitx} % For better number formatting
+\usepackage{pgfplots} % For creating plots directly in LaTeX (optional)
+\pgfplotsset{compat=1.18}
+
+\renewcommand{\baselinestretch}{1.5} 
+
+\title{Integrating Heterogeneous Data to Inform on Vector-Borne Diseases: A CDM-Based Approach with Application to Malaria in Greater Accra, Ghana}
+
+\author[1,2]{Salvador D. Atagong}
+\author[1]{Kennedy Senagi}
+\author[1]{Komi Mensah Agboka}
+\author[2,3]{Henri Tonnang}
+\author[2]{John Odindi}
+
+\affil[1]{International Center of Insect Physiology and Ecology (ICIPE)}
+\affil[2]{University of KwaZulu-Natal, South Africa}
+\affil[3]{International Institute of Tropical Agriculture (IITA), Ibadan, Nigeria}
+
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Vector-borne diseases (VBDs) such as malaria remain a significant public health challenge, particularly in sub-Saharan Africa. Understanding the complex interactions between vectors, pathogens, hosts, and environmental factors requires integration of heterogeneous data from multiple sources. However, data fragmentation and lack of standardization hinder comprehensive analysis and modeling efforts. This study addresses this gap by developing a Common Data Model (CDM) specifically designed for vectors of vector-borne diseases. We identified key drivers influencing vector dynamics and disease transmission, sourced publicly available datasets covering climate, environmental, entomological, and socio-economic factors, and designed a star-schema data warehouse with 8 core tables to harmonize these disparate data sources. Extract-Transform-Load (ETL) pipelines were developed to integrate data from sources including GBIF, Vector Atlas, ERA5-Land, and World Bank indicators. We validated the approach through a case study in Greater Accra, Ghana, analyzing correlations between climatic variables (temperature, rainfall) and Anopheles gambiae abundance over a 7-month period (February 2017 to June 2018). While the CDM successfully integrated disease burden estimates from sources like the Malaria Atlas Project, temporal and spatial resolution mismatches prevented their inclusion in the quantitative analysis for this specific case study. Results from the climate-vector analysis revealed weak contemporaneous correlations (r = 0.111 for temperature, r = 0.099 for rainfall) but stronger lagged effects, with temperature showing positive correlations at 1-2 month lags ($r \approx 0.43$) and rainfall exhibiting a strong positive correlation at a 3-month lag (r = 0.672). These findings demonstrate the utility of the proposed CDM in enabling integrated analysis and generating actionable insights for VBD surveillance and control, while also highlighting important considerations for multi-source data integration.
+\end{abstract}
+
+\section{Introduction}
+\label{sec:intro}
+
+Vector-borne diseases, which are transmitted by various arthropods, represent a substantial and escalating global health challenge. The transmission dynamics of these diseases are highly intricate, influenced by a diverse array of interconnected factors including the vector (e.g., mosquitoes, ticks), the pathogen, the host population, and environmental variables like climate and land use \citep{2025.RL.HMD}. Consequently, effective surveillance, modeling, and control strategies for these diseases depend on a holistic understanding of these disparate data streams. 
+
+A major obstacle to this understanding is the fragmented and heterogeneous nature of the data, which is often collected by different organizations using inconsistent standards, formats, and terminologies \citep{2025.RL.HMD}. This challenge of data interoperability is not exclusive to the study of vector-borne diseases. Diverse fields such as clinical research, neuroscience, and engineering have all grappled with similar issues. 
+
+The solution that has emerged in these domains is the Common Data Model (CDM). A CDM normalizes variables, standardizing definitions across different data representations \citep{2024.NA.HTC}. It is, in a way, a data integration approach with the added value of standardizing the vocabulary used across integrated data sources. By mapping source data into this unified model, a CDM facilitates large-scale, multi-site studies, enables the creation of generalizable analytical tools, and enhances the reproducibility and transparency of research \citep{2024.NA.HTC, 2024.MF.TPC}. 
+
+The success of CDMs in other domains, particularly in human health research, provides a strong precedent. For instance, the Observational Medical Outcomes Partnership (OMOP) CDM has been crucial in standardizing electronic health record data, which has enabled large-scale observational studies and the validation of drug safety \citep{2024.NA.HTC, 2024.MF.TPC, 2023.AS.ACD, 2022.YG.BDA, 2019.JG.DMH}. Similarly, a CDM has been developed for rare diseases to overcome the challenge of geographically sparse patient data and enable multi-center studies \citep{2024.NA.HTC}. These examples underscore the power of a standardized data model to unlock the full potential of disparate datasets.
+
+Despite the proven value of CDMs, there is no widely adopted and purpose-built model for integrating the full spectrum of data related to vectors of vector-borne diseases. While systems have been developed to manage specific data categories, a comprehensive framework that harmonizes entomological, environmental, spatial, socio-economic, and intervention data is critically lacking \citep{2025.RL.HMD}. The development of such a model would allow researchers and public health agencies to combine previously incompatible datasets, leading to more robust disease models, improved risk management strategies, and possibly more effective public health interventions planning.
+
+The development of a Common Data Model (CDM) for vectors of vector-borne diseases must be informed by a review of foundational data modeling principles and an analysis of how CDMs have been successfully implemented across various domains. The primary motivation for these models, regardless of the field, is to address data heterogeneity and enable large-scale, collaborative research. The conceptual basis for modern CDMs can be traced back to E.F. Codd's seminal work on the relational model of data \citep{1970.EF.ARM}. This model was designed to protect users from having to know the internal organization of data, ensuring that changes to the data representation would not affect user activities or applications. This principle of abstraction is central to the utility of any CDM, which acts as a layer between diverse source data and analytical applications \citep{2017.MD.ITD}.
+
+Fundamentally, a CDM provides a shared, standardized schema that allows data from disparate sources to be mapped into a single, cohesive structure, thereby enabling semantic integration \citep{2017.MD.ITD}. The most prominent examples of successful CDMs are found in the health and biomedical domains, where the need to integrate fragmented clinical and research data is paramount. The Observational Medical Outcomes Partnership (OMOP) CDM is a widely recognized example, specifically designed to standardize electronic health record data for active safety surveillance. The OMOP CDM has been shown to be effective in various applications \citep{2024.MF.TPC, 2023.AS.ACD}. The model can be used to transform primary care data, which is often messy and inconsistent, into a standardized format for large-scale observational and longitudinal research. While originally focused on clinical data, the OMOP CDM's extensibility allows for the inclusion of novel entities, such as dietary supplements, to support specialized research. The model's feasibility has even been explored for representing data from published nursing research, although challenges were identified in areas like patient-reported outcomes and socioeconomic information \citep{2017.HK.FOR}. CDMs provide a consistent foundation for artificial intelligence applications by standardizing medication features and other clinical data from intensive care units, which are typically difficult to integrate due to their complexity \citep{2016.MG.ECD, 2015.FF.CAC}. CDMs can be customized to support niche areas; for example, an OMOP-based implementation was developed for rare diseases to overcome the geographical sparsity of patient data and enable multi-center studies \citep{2024.NA.HTC, 2015.FF.CAC, 2015.EA.FAU}.
+
+In this study, we address the critical need for harmonizing data in the domain of vector-borne diseases by first identifying key drivers that influence vectors and vector-borne disease outbreaks. We then investigate various public data sources that inform on the identified driving factors. The knowledge from these data sources is harnessed to design a CDM to accommodate all the identified interconnected factors that influence vector and vector-borne disease dynamics. Extract-Transform-Load (ETL) pipelines are then developed to integrate the identified data sources following state-of-the-art best practices. The harmonized data is then validated with a modeling approach, focusing on a case study in Greater Accra, Ghana, to analyze the relationship between climatic variables and Anopheles gambiae abundance. While disease burden estimates from sources like the Malaria Atlas Project were successfully integrated into the CDM, temporal and spatial resolution mismatches with the available vector and environmental data for this specific case study precluded their inclusion in the quantitative analysis. This limitation highlights important considerations for multi-source data integration and provides valuable insights for future implementations. In Section 2 we lay out the methodological details of our study, Section 3 shows the results of our analysis, in Section 4 we discuss our findings in detail and in context of similar efforts, and finally Section 5 concludes our work.
+
+\section{Materials \& Methods}
+\label{sec:method}
+
+\subsection{Data sources identification}
+
+Vectors responsible for vector-borne disease transmission are influenced by numerous environmental, climatic, and human factors. Additionally, the transmission dynamics which results in disease outbreaks is influenced by socio-economic conditions, urbanization, population migrations, and various other factors. To derive a broad and uniform understanding of vectors and vector-borne diseases, we decided to focus our harmonization efforts on data that inform on: vector occurrence, vector abundance, vector bionomics, vector insecticide resistance, climatic information such as temperature and precipitation crucial for vector survival and reproduction, disease burden estimates from sources like the Malaria Atlas Project, as well as human factors such as socio-economic metrics, population movement or migration information, and urbanization information such as proximity to health care centers. This approach enables a more complete picture of vector and vector-borne disease dynamics. We focused on publicly accessible data sources, and Table \ref{tab:dataSources} summarizes all the identified data sources for each category of data we are interested in.
+
+\begingroup
+\small
+\renewcommand{\arraystretch}{1.2}
+
+\begin{longtable}{|p{0.22\linewidth}|p{0.25\linewidth}|p{0.45\linewidth}|}
+    \caption{Data sources overview.} \label{tab:dataSources} \\
+    \hline 
+    \textbf{Data Category} & \textbf{Data Sub-category} & \textbf{Data source} \\ 
+    \hline
+    \endfirsthead
+
+    \multicolumn{3}{c}{{\bfseries \tablename\ \thetable{} -- continued from previous page}} \\
+    \hline 
+    \textbf{Data Category} & \textbf{Data Sub-category} & \textbf{Data source} \\
+    \hline 
+    \endhead
+
+    \hline \multicolumn{3}{|r|}{{Continued on next page}} \\ \hline
+    \endfoot
+    \hline
+    \endlastfoot
+
+    Climate & 
+    Weather stations & 
+    TAHMO (Trans-African Hydro-Meteorological Observatory), 
+    African National Meteorological Services (NMS), 
+    SIEREM Database (IRD), ICPAC, Africa Data Hub, World Bank Portal, WorldClim, CHIRPS, NOAA CDO \\
+    \cline{2-3}
+    & 
+    Gridded observations and reanalysis & 
+    ERA5; ERA5-Land; MERRA-2; JRA-55; NCEP/NCAR R1 \& R2; 
+    20th Century Reanalysis (20CR); Precipitation CHIRPS (v2); 
+    GPCC; IMERG NASA; CRU TS (UK); GISTEMP; NOAA OI SST V2 \\
+    \cline{2-3}
+    Environmental data &
+    Satellite products (land use and land cover change, e.g., deforestation and urbanization) &
+    ESA WorldCover 10m 2020, 2021 (Annual) European Space Agency (ESA);
+    Dynamic World 10m Near-Real-Time (NRT) (2015-Present) Google/WRI/ESRI;
+    GlobeLand30 30m 2000, 2010, 2020 China's Ministry of Natural Resources;
+    ESA CCI Land Cover 300m;
+    MODIS Land Cover (MCD12Q1) 500m;
+    Historical Land-Cover Change Global 1700 - 2010 NOAA/University of Illinois;
+    Landsat (4, 5, 7, 8, 9) 30m;
+    Sentinel-2 10m;
+    Landsat Program Landsat 4, 5, 7, 8, 9 (TM, ETM+, OLI) 30m;
+    Sentinel-2 MSI Instrument 10m (Visible/NIR bands);
+    Google Earth Engine (GEE) Multiple Varies (30m \& 10m);
+    MODIS (Terra \& Aqua);
+    AVHRR NOAA Satellites ~1km;
+    VIIRS Suomi NPP/NOAA-20 375m, 750m \\
+    \cline{2-3}
+    &
+    Waste and water facility databases &
+    HydroWASTE;
+    OpenStreetMap (OSM);
+    UN-Habitat Waste Wise Cities Tool (WaCT);
+    AQUASTAT;
+    World Bank Water Data / IBNET;
+    Africa Infrastructure Database (AID);
+    WHO/UNICEF Joint Monitoring Programme (JMP) \\
+    \hline
+    Demographic and social data &
+    Population by age, sex, and other variables &
+    United Nations World Population Prospects (WPP);
+    U.S. Census Bureau International Database (IDB);
+    World Bank DataBank (WDI);
+    Our World in Data;
+    Demographic and Health Surveys (DHS) Program;
+    UNICEF Multiple Indicator Cluster Surveys (MICS);
+    World Bank Microdata Library \\
+    \cline{2-3} 
+    &
+    Poverty, income, and schooling databases &
+    World Bank Poverty and Inequality Platform (PIP);
+    Oxford Poverty \& Human Development Initiative (OPHI);
+    World Bank Microdata Library / SSAPOV;
+    UNESCO Institute for Statistics (UIS) Data Centre;
+    UNICEF Multiple Indicator Cluster Surveys (MICS);
+    UNICEF State of African Children Statistical Compendium;
+    Demographic and Health Surveys (DHS) Program;
+    National Statistical Offices (NSOs) of African Countries \\
+    \hline 
+    Epidemiological data &
+    Case notification data &
+    WHO Immunization Data Portal;
+    Africa CDC / WHO AFRO DHIS2;
+    IHME Global Burden of Disease (GBD) \\
+    \cline{2-3}
+    &
+    Disease burden estimates &
+    Malaria Atlas Project (MAP);
+    IHME Global Burden of Disease (GBD);
+    WHO World Malaria Report \\
+    \hline
+    Biological data &
+    Genomic and serotype data &
+    AGARI (Africa Genome Archiving for Response and Insight);
+    Africa Pathogen Genomics Initiative (Africa PGI);
+    African Genomic Medicine Portal (AGMP);
+    GISAID (Global Initiative on Sharing All Influenza Data);
+    INSDC (International Nucleotide Sequence Database Collaboration);
+    Pathoplexus;
+    Nextstrain;
+    PubMLST \& BIGSdb-Pasteur \\
+    \cline{2-3} 
+    &
+    Insecticide resistance data &
+    IRMapper;
+    WHO Global Database on Insecticide Resistance in Malaria Vectors;
+    Global Plan for Insecticide Resistance Management (GPIRM);
+    VectorBase;
+    INSDC (GenBank, ENA, DDBJ);
+    WHO Malaria Threats Map;
+    VectorAtlas \\
+    \cline{2-3} 
+    &
+    Bionomics data &
+    VectorAtlas;
+    VectorBase;
+    GBIF;
+    VectorByte;
+    MalariaGEN;
+    Global Bionomics Database for Dominant Malaria Vectors \\
+    \hline 
+    Biodiversity data &
+    Vector presence data &
+    GBIF;
+    Vector Atlas;
+    iNaturalist;
+    VectorBase;
+    Disease Vector Database (DVD);
+    IR Mapper (Insecticide Resistance Mapper);
+    MalariaGEN Vector Genome Observatory \\
+    \cline{2-3}
+    &
+    Presence and abundance of nonhuman hosts &
+    Global Biodiversity Information Facility (GBIF);
+    IUCN Red List of Threatened Species;
+    ASM Mammal Diversity Database (MDD);
+    Database of Host-Pathogen Interactions;
+    NCBI Nucleotide Database;
+    VectorByte VecTraits Database;
+    SDM Outputs (published literature) \\
+    \hline
+\end{longtable}
+\endgroup
+
+\subsection{Integration approach}
+
+Following the identification of the different data sources, we designed an integration pipeline inspired by data warehousing theory, composed of three layers of integration. The first layer is the staging area, where data is stored directly in the format of the data source. However, at this stage, given that not all the data we were working with was directly in tabular format (e.g., TIFF files, GRIB files), we developed scripts to translate all data from data sources to table-like structures, which are then uploaded to a relational database as relational table entities.
+
+The second layer is the data warehouse, where the staging data is transformed and loaded into our dimension and fact tables using custom ETL pipelines written in Python. After this stage, the data can then be re-interpreted in various reports, which constitute our third layer, the reporting layer. The final data that can be easily used for modeling and decision-making is found in the third layer.
+
+\subsection{Data warehouse design}
+
+The data warehouse was designed following a star-schema approach with a set of dimensions and fact tables defined to better organize the collected data and align it with a more standardized semantic. The schema was implemented using SQLAlchemy ORM in Python, providing flexibility to deploy on either SQLite (for development) or PostgreSQL (for production) databases. Figure \ref{fig:schema} illustrates the overall schema design.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.75\textwidth]{figs/er_diagram.png}
+\caption{Entity-relationship diagram of the Common Data Model showing dimensions and fact tables with their relationships.}
+\label{fig:schema}
+\end{figure}
+
+\subsubsection{Dimension Tables}
+
+The model includes the following dimension tables that serve as analysis axes:
+
+\begin{itemize}
+    \item \textbf{DimTime}: Stores temporal information at daily granularity. Each record represents a single day with attributes including date\_id (in YYYY-MM-DD format), year, month, week number, day of year, season, and holiday status. This dimension enables temporal aggregation and time-based analysis across all fact tables.
+
+    \item \textbf{Location}: Implements a geographic hierarchy with self-referential relationship to represent administrative divisions (country, region, district, village). Key attributes include location\_code (unique identifier), name, admin\_level, parent location reference, geometry in WKT format for spatial operations, centroid coordinates, and country identification (country\_name, country\_code). The model includes a method to automatically populate country information from centroid coordinates using reverse geocoding.
+
+    \item \textbf{HealthFacility}: Stores information about healthcare facilities including facility code, name, location reference, coordinates, facility type, and catchment population. This dimension enables analysis of healthcare accessibility and its relationship to disease reporting.
+
+    \item \textbf{Intervention}: Records vector control interventions such as Indoor Residual Spraying (IRS), Insecticide-Treated Net (ITN) distribution, and larviciding. Attributes include intervention type, date range, location, coverage metrics, and target disease.
+
+    \item \textbf{SocioEconomic}: Captures socio-economic indicators at the location-year level. Attributes include indicator name (e.g., 'ITN\_use', 'poverty\_rate'), indicator value, and data source. This dimension enables integration of demographic and economic factors into disease risk models.
+\end{itemize}
+
+\subsubsection{Fact Tables}
+
+The fact tables store quantitative measurements and observations:
+
+\begin{itemize}
+    \item \textbf{HostCase}: Records disease case data for humans or animals. Key attributes include case identifier, location reference, onset and reported dates, disease classification (e.g., 'malaria', 'dengue'), pathogen information, case status (suspected, probable, confirmed), confirmation method, and host details (age, sex, outcome). This table forms the core of epidemiological surveillance data.
+
+    \item \textbf{DiseaseBurden}: Stores modeled disease burden estimates from sources like the Malaria Atlas Project and the Global Burden of Disease study. Attributes include location, year, disease type, and various metrics: incidence rate, prevalence rate, mortality rate, and confidence intervals (cases\_lower, cases\_upper, cases\_mean). Metadata fields track the data source, version, raster file origin, and extraction method. This table provides critical context for understanding the health impact of vector dynamics.
+
+    \item \textbf{VectorObservation}: Captures entomological surveillance data including vector presence, abundance, and infection status. Attributes include location, date, vector species and subspecies, life stage, sex, collection method, count, density estimates, and pathogen infection status (tested\_for\_pathogen, infection\_status, infection\_rate). This table enables analysis of vector population dynamics and infection prevalence.
+
+    \item \textbf{EnvironmentalFactor}: Stores climate and environmental data critical for vector survival and disease transmission. Attributes include location, date, temperature metrics (mean, min, max), rainfall total, relative humidity, remote sensing indices (NDVI, EVI, land surface temperature), and derived indicators (aridity index, potential breeding sites). This table supports integration of environmental drivers into epidemiological models.
+
+    \item \textbf{ResistanceTest}: Records insecticide resistance bioassay results linked to vector observations. Attributes include test type (WHO tube, CDC bottle), insecticide details, concentration, exposure time, mortality, and resistance status. This table enables monitoring of insecticide resistance patterns and their impact on vector control effectiveness.
+\end{itemize}
+
+All tables include appropriate foreign key relationships to ensure referential integrity, and unique constraints are implemented where necessary (e.g., location\_code uniqueness, environmental factor location-date combinations, and disease burden location-year-disease combinations).
+
+\subsection{Case Study: Greater Accra, Ghana}
+
+To validate the utility of our CDM, we conducted a focused case study in the Greater Accra region of Ghana, targeting Anopheles gambiae, the primary malaria vector in sub-Saharan Africa. The objectives were to:
+
+\begin{enumerate}
+    \item Demonstrate the feasibility of integrating heterogeneous data using the proposed CDM.
+    \item Analyze the relationship between climatic variables (temperature and rainfall) and vector abundance.
+    \item Quantify lagged effects of climate on vector populations to inform early warning systems.
+    \item Assess the practical challenges of integrating disease burden estimates with high-resolution vector and environmental data.
+\end{enumerate}
+
+\subsubsection{Study Area}
+Greater Accra is the most urbanized region in Ghana, with a population of over 4 million people. The region experiences a tropical savanna climate with distinct wet and dry seasons, making it suitable for studying climate-vector interactions. The rapid urbanization in the area also provides an opportunity to explore potential socio-ecological drivers of vector-borne disease transmission.
+
+\subsubsection{Data Acquisition and Integration}
+
+For this case study, we focused on a subset of the data sources identified in Table \ref{tab:dataSources}:
+
+\begin{itemize}
+    \item \textbf{Vector occurrence data}: Obtained from GBIF (Global Biodiversity Information Facility) for Anopheles gambiae sensu lato. Records were filtered to include only those with valid coordinates and collection dates.
+    \item \textbf{Environmental data}: ERA5-Land reanalysis data provided daily estimates of 2-meter temperature and total precipitation at approximately 9 km resolution. Data were extracted for the Greater Accra region for the period 2014-2025.
+    \item \textbf{Location data}: Administrative boundaries for Ghana and the Greater Accra region were obtained from the Database of Global Administrative Areas (GADM).
+    \item \textbf{Disease burden data}: Malaria incidence and prevalence estimates for Ghana were obtained from the Malaria Atlas Project, providing annual raster data at approximately 5 km resolution for the period 2000-2024.
+\end{itemize}
+
+All data were transformed and loaded into the CDM using custom ETL pipelines written in Python. The pipelines handled data cleaning, coordinate validation, date parsing, and unit conversions. For disease burden data, raster files were processed to extract zonal statistics for each administrative region, with values loaded into the DiseaseBurden table alongside metadata including source, version, and extraction method.
+
+Vector point locations were aggregated to the regional level to enable merging with gridded climate data, as the environmental data was stored at the regional level while vector observations were at point locations. However, a key challenge emerged during integration: while disease burden data provided valuable annual estimates at the national and regional levels, the temporal resolution (annual) and available years did not align with the high-frequency vector observations (daily) and environmental data (daily) for the specific study period (February 2017 to June 2018). This temporal mismatch, combined with spatial aggregation differences, prevented meaningful integration of disease burden estimates into the quantitative analysis for this specific case study. This limitation is discussed further in Section 4.
+
+\subsubsection{Analytical Approach}
+
+After integration, we performed the following analyses:
+
+\begin{enumerate}
+    \item \textbf{Temporal aggregation}: Daily climate data were aggregated to monthly means, and vector observations were aggregated to monthly total counts across all sampling sites in the region.
+    \item \textbf{Correlation analysis}: Pearson correlation coefficients were computed between monthly vector abundance and contemporaneous monthly temperature and rainfall.
+    \item \textbf{Lagged correlation analysis}: To account for delayed effects of climate on vector populations, we computed correlations at lags of 1, 2, and 3 months.
+    \item \textbf{Spatial distribution mapping}: Sampling sites were mapped with bubble sizes proportional to total abundance to visualize spatial heterogeneity in vector populations.
+\end{enumerate}
+
+All analyses were conducted using Python with libraries including pandas, numpy, scipy, matplotlib, and geopandas.
+
+\section{Results}
+\label{sec:results}
+
+\subsection{Data Integration Summary}
+
+The ETL pipelines successfully integrated data from multiple sources into the CDM. For the Greater Accra case study, we identified 41 locations in Ghana, with 80 vector observation records and 2,925 daily environmental records. After spatial filtering to the Greater Accra region, 72 vector observations from 5 unique sampling sites were retained. Disease burden data for Ghana spanning 2000-2024 were successfully loaded into the DiseaseBurden table, including incidence rates, prevalence rates, and case estimates from the Malaria Atlas Project.
+
+Table \ref{tab:dataSummary} summarizes the integrated data used in the case study analysis, focusing on the vector and environmental components that were successfully merged for quantitative analysis. The disease burden data, while successfully integrated into the CDM, could not be incorporated into the quantitative analysis due to temporal resolution mismatches, as discussed in Section 4.
+
+\begin{table}[H]
+\centering
+\caption{Summary of integrated data for Greater Accra case study.}
+\label{tab:dataSummary}
+\begin{tabular}{l c}
+\toprule
+\textbf{Metric} & \textbf{Value} \\
+\midrule
+Total locations in Ghana & 41 \\
+Vector observations (total) & 80 \\
+Environmental records (days) & 2,925 \\
+Points within Greater Accra & 72 \\
+Unique sampling sites & 5 \\
+Sampling sites with abundance data & 2 \\
+Analysis period & Feb 2017 -- Jun 2018 \\
+Overlapping months & 7 \\
+Disease burden records (integrated but not used in analysis) & 25 annual records \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Vector Abundance and Climate Patterns}
+
+Monthly vector abundance in Greater Accra showed considerable variation over the 7-month analysis period, with total counts ranging from 18 to 174 individuals (mean = 82.0, SD = 65.7). Peak abundance occurred in May 2017 (174 individuals), while the lowest abundance was recorded in June 2018 (18 individuals).
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figs/time_series_plot.png}
+\caption{Monthly time series of (a) Anopheles gambiae abundance, (b) mean temperature, and (c) total rainfall in Greater Accra from February 2017 to June 2018. Error bands represent standard deviations where available.}
+\label{fig:timeSeries}
+\end{figure}
+
+Figure \ref{fig:timeSeries} illustrates the temporal dynamics of vector abundance alongside temperature and rainfall. Temperature remained relatively stable throughout the period, ranging from 25.0°C to 30.0°C (mean = 28.0°C, SD = 1.0°C). Rainfall showed more variability, with monthly totals ranging from 0.1 mm to 64.8 mm (mean = 3.6 mm, SD = 1.9 mm).
+
+\subsection{Correlation Analysis}
+
+Pearson correlation analysis revealed weak contemporaneous relationships between vector abundance and climatic variables. The correlation coefficient with temperature was r = 0.111 ($p > 0.05$), and with rainfall was r = 0.099 ($p > 0.05$), indicating that same-month climate conditions explained little of the variation in vector abundance.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.9\textwidth]{figs/correlation_plot.png}
+\caption{Scatter plots showing relationships between vector abundance and (a) monthly mean temperature, and (b) monthly total rainfall. Trend lines are shown with 95\% confidence bands.}
+\label{fig:correlation}
+\end{figure}
+
+\subsection{Lagged Correlation Analysis}
+
+When considering lagged effects, stronger relationships emerged (Table \ref{tab:laggedCorrelations}). Temperature showed moderate positive correlations at lags of 1 month (r = 0.417) and 2 months (r = 0.445), suggesting that warmer conditions may promote vector population growth with a delay of 1-2 months. However, at a 3-month lag, the correlation became strongly negative (r = -0.828), potentially indicating density-dependent regulation or seasonal effects.
+
+\begin{table}[H]
+\centering
+\caption{Lagged correlations between climatic variables and Anopheles gambiae abundance.}
+\label{tab:laggedCorrelations}
+\begin{tabular}{l c c c}
+\toprule
+\textbf{Variable} & \textbf{Lag 1} & \textbf{Lag 2} & \textbf{Lag 3} \\
+\midrule
+Temperature & 0.417 (n=6) & 0.445 (n=5) & -0.828 (n=4) \\
+Rainfall & -0.554 (n=6) & -0.379 (n=5) & 0.672 (n=4) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Rainfall exhibited negative correlations at lags of 1 month (r = -0.554) and 2 months (r = -0.379), but a strong positive correlation at a 3-month lag (r = 0.672). This pattern suggests that rainfall may initially suppress vector populations (possibly through washing out breeding sites), followed by a delayed positive effect as standing water creates new breeding habitats approximately three months later.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=\textwidth]{figs/lagged_correlation_plot.png}
+\caption{Lagged correlation analysis showing relationships between vector abundance and temperature (top row) and rainfall (bottom row) at lags of 1, 2, and 3 months. Each point represents a monthly observation, with the number of data points (n) indicated in each panel.}
+\label{fig:laggedCorrelation}
+\end{figure}
+
+\subsection{Spatial Distribution of Sampling Sites}
+
+Two primary sampling sites contributed to the abundance data in Greater Accra. Site point\_5\_8830\_0\_1170 accounted for the majority of observations (42 observations, total abundance = 494, mean = 11.8), while site point\_5\_7810\_0\_5860 contributed 30 observations (total abundance = 80, mean = 2.7). Figure \ref{fig:spatialMap} shows the spatial distribution of these sampling sites within the Greater Accra region.
+
+\begin{figure}[H]
+\centering
+\includegraphics[width=0.8\textwidth]{figs/spatial_map.png}
+\caption{Spatial distribution of Anopheles gambiae sampling sites in Greater Accra. Bubble sizes are proportional to total abundance, and colors indicate mean abundance per site. The region boundary is shown in red.}
+\label{fig:spatialMap}
+\end{figure}
+
+\section{Discussion}
+\label{sec:discussion}
+
+The results of this study demonstrate the feasibility and value of a Common Data Model for integrating heterogeneous data sources relevant to vector-borne disease research. By harmonizing entomological, climatic, and spatial data within a unified framework, we were able to conduct analyses that would have been challenging with the raw, disparate datasets. Importantly, the successful integration of disease burden data into the CDM, despite its exclusion from the quantitative analysis for this specific case study, highlights both the potential and the practical challenges of multi-source data integration.
+
+\subsection{Data Integration Challenges and Solutions}
+
+The primary challenge encountered during integration was the spatial scale mismatch between vector occurrence data (point locations) and environmental data (regional grid cells). As reported in the location code diagnostic (Section 6 of the notebook output), no common location codes existed between the vector observations (e.g., 'point\_5\_8830\_0\_1170') and the environmental data ('greater\_accra'). This necessitated a two-step aggregation approach: first, vector points were spatially filtered to the Greater Accra region using boundary polygons, and second, monthly totals were calculated across all points within the region. This approach, while effective, highlights the importance of incorporating hierarchical location relationships in CDM design, as we have done with the parent\_location\_code field in our Location dimension.
+
+Similar integration challenges have been reported in other multi-source data harmonization efforts. For instance, \citet{2017.CL.IMS} encountered comparable issues when integrating malaria surveillance data with climate data in Ethiopia, and developed similar spatial aggregation techniques. Our approach extends this work by formalizing the integration within a reusable CDM framework rather than creating ad-hoc solutions for each analysis.
+
+\subsection{Integrating Disease Burden Data: Opportunities and Limitations}
+
+A significant contribution of this work is the successful integration of disease burden estimates from the Malaria Atlas Project into the CDM. The DiseaseBurden table was designed to accommodate annual estimates of incidence, prevalence, and mortality rates at various administrative levels, complete with metadata tracking data provenance. This integration was technically successful: raster files were processed using zonal statistics to extract values for each administrative region, and the resulting data were loaded into the database alongside source information and extraction methods.
+
+However, when attempting to incorporate these disease burden estimates into the case study analysis, several limitations emerged:
+
+\begin{enumerate}
+    \item \textbf{Temporal resolution mismatch}: Disease burden data from MAP are provided at annual resolution, while vector observations and environmental data were available at daily resolution. For the 7-month study period (February 2017 to June 2018), annual estimates would provide at most two data points (2017 and 2018), insufficient for meaningful correlation analysis with the monthly vector abundance time series.
+
+    \item \textbf{Temporal coverage mismatch}: The available vector observations covered a relatively short period, while disease burden estimates are typically analyzed over multi-year or decadal timescales. Extending the vector time series would be necessary to leverage disease burden data effectively.
+
+    \item \textbf{Spatial aggregation differences}: Disease burden estimates are typically produced at administrative levels (region, district), while vector observations were aggregated from point locations. While both can be harmonized at the regional level, the loss of spatial heterogeneity may mask important local relationships between vector abundance and disease incidence.
+\end{enumerate}
+
+These challenges are not unique to our study and reflect broader issues in multi-source data integration. \citet{2015.DD.FKC} highlighted similar challenges when integrating disease surveillance data with environmental covariates, noting that temporal and spatial resolution mismatches often necessitate trade-offs between data richness and analytical rigor. Our experience underscores the importance of carefully considering data characteristics (including temporal resolution, spatial scale, and temporal coverage) when designing integrated analyses using CDMs.
+
+Despite these limitations, the successful integration of disease burden data into the CDM represents an important step toward comprehensive vector-borne disease analysis. As longer time series of vector observations become available and as higher temporal resolution disease estimates are developed, the DiseaseBurden table will provide a foundation for exploring relationships between vector dynamics and health outcomes.
+
+\subsection{Climate-Vector Relationships}
+
+The weak contemporaneous correlations between climate variables and vector abundance (r = 0.111 for temperature, r = 0.099 for rainfall) suggest that same-month conditions are poor predictors of vector populations. This is consistent with ecological theory, which posits that vector populations respond to environmental conditions with time lags corresponding to life cycle durations and habitat dynamics \citep{2010.WJ.CIP}.
+
+The stronger lagged correlations observed in our analysis provide more insight into the mechanisms driving vector abundance. The positive correlation with temperature at lags of 1-2 months ($r \approx 0.43$) aligns with laboratory and field studies showing that higher temperatures accelerate mosquito development rates, shorten gonotrophic cycles, and increase biting frequency \citep{2025.CG.EOT, 1966.MS.FRL}. However, the sharp negative correlation at a 3-month lag (r = -0.828) is intriguing and may reflect density-dependent regulation or seasonal transitions. As temperatures remain warm, other limiting factors such as larval competition, predation, or resource depletion may come into play, reducing population size despite favorable temperatures \citep{2020.SF.BLF}.
+
+The rainfall patterns observed in this study—negative correlations at lags of 1-2 months followed by a strong positive correlation at a 3-month lag—suggest a biphasic response. Heavy rainfall may initially flush out larval habitats, reducing vector abundance in the short term \citep{2015.MA.SHH}. However, the subsequent standing water creates new breeding sites, leading to population increases approximately three months later. This delayed effect has important implications for early warning systems, suggesting that rainfall anomalies could serve as predictors of vector abundance peaks with a 3-month lead time.
+
+These findings are broadly consistent with other studies in West Africa. \citet{2025.CJ.SMA} found similar lagged relationships between rainfall and malaria incidence in Mozambique, with optimal predictors at lags of 2-3 months. \citet{2021.CS.SAA} also reported significant associations between climate variables and malaria cases in Burkina Faso with lags of 1-2 months. Our study extends this work by focusing specifically on vector abundance rather than disease incidence, providing a more direct link to entomological risk factors, while also highlighting the importance of integrating disease burden data when sufficient temporal coverage exists.
+
+\subsection{Implications for Vector-Borne Disease Surveillance}
+
+The results of this study have several implications for vector-borne disease surveillance and control in West Africa:
+
+\begin{enumerate}
+    \item \textbf{Early warning systems}: The lagged relationships identified here (particularly the 3-month lag for rainfall) could be incorporated into early warning systems for malaria outbreaks. By monitoring rainfall anomalies, public health officials could anticipate increases in vector populations and deploy interventions (e.g., insecticide spraying, bed net distribution) proactively rather than reactively. As longer time series become available, these systems could be enhanced by incorporating disease burden estimates to directly predict health outcomes.
+
+    \item \textbf{Targeted interventions}: The spatial heterogeneity observed in sampling sites (with one site accounting for over 86\% of total observations) highlights the importance of understanding local vector ecology. Control efforts could be prioritized in areas with historically high vector abundance, while surveillance could be enhanced in areas with limited historical data. Disease burden estimates, when available at sufficient spatial resolution, could help validate these prioritization strategies.
+
+    \item \textbf{Data-driven modeling}: The integrated dataset produced by our CDM provides a rich resource for developing predictive models of vector abundance and disease risk. Machine learning approaches, which have shown promise in similar contexts \citep{2024.MH.AVD, 2024.OK.PMO}, could leverage these multi-source data to generate more accurate forecasts. The DiseaseBurden table, despite its exclusion from this analysis, represents a critical component for future modeling efforts once temporal coverage expands.
+\end{enumerate}
+
+\subsection{Limitations and Future Work}
+
+Several limitations of this study should be acknowledged. First, the relatively short time series (7 months) limits the statistical power of our correlation analyses and precludes the use of more sophisticated time series models. As additional data become available, longer-term analyses could confirm and refine the lagged relationships observed here.
+
+Second, our analysis focused on only two climatic variables (temperature and rainfall) and one vector species (Anopheles gambiae). The CDM framework we have developed can accommodate many additional variables, including vegetation indices, land use change, socio-economic indicators, insecticide resistance data, and disease burden estimates that could provide a more comprehensive understanding of vector dynamics and disease transmission. Future work will incorporate these additional dimensions to develop more robust predictive models.
+
+Third, the temporal and spatial mismatches between disease burden data and the available vector observations prevented their integration into the quantitative analysis for this case study. This limitation highlights the importance of carefully designing data collection strategies that align with the temporal and spatial scales of existing datasets. Future work should focus on:
+
+\begin{itemize}
+    \item Extending the temporal coverage of vector observations through continued surveillance and retrospective data digitization.
+    \item Exploring methods for disaggregating annual disease burden estimates to finer temporal scales using seasonal covariates.
+    \item Developing hierarchical models that can accommodate data at multiple temporal and spatial resolutions simultaneously.
+\end{itemize}
+
+Fourth, the spatial mismatch between point-level vector observations and gridded environmental data required aggregation that may obscure fine-scale heterogeneity. As higher-resolution environmental data become available (e.g., from Sentinel-2 at 10m resolution), more precise spatial analyses will be possible.
+
+Finally, our case study focused on a single urban region. Vector ecology may differ substantially in rural areas, where breeding sites, host availability, and environmental conditions vary. Extending this analysis to other ecological zones in Ghana and across West Africa would test the generalizability of our findings and provide opportunities to incorporate disease burden data at broader spatial scales.
+
+\section{Conclusion}
+\label{sec:conclusion}
+
+This study demonstrates the feasibility and value of a Common Data Model for integrating heterogeneous data sources relevant to vector-borne disease research. By harmonizing entomological, climatic, and spatial data within a unified framework, we were able to conduct integrated analyses that would have been challenging with the raw, disparate datasets. The proposed CDM, implemented with eight core tables spanning dimensions and facts, provides a flexible and extensible foundation for vector-borne disease research. Importantly, the successful integration of disease burden data from the Malaria Atlas Project into the DiseaseBurden table demonstrates the model's capacity to accommodate diverse data types, even when they cannot be immediately incorporated into quantitative analyses.
+
+Our case study in Greater Accra, Ghana, revealed important lagged relationships between climatic variables and Anopheles gambiae abundance. Temperature showed positive correlations at lags of 1-2 months, while rainfall exhibited a strong positive correlation at a 3-month lag. These findings have implications for early warning systems and targeted vector control interventions. The challenges encountered in integrating disease burden data, particularly temporal resolution mismatches; highlight important considerations for future data collection and integration efforts.
+
+The CDM framework developed here provides a foundation for more comprehensive analyses incorporating additional variables; including vegetation indices, land use change, socio-economic indicators, insecticide resistance data, and disease burden estimates. As more data become available and the time series lengthens, this approach could support the development of robust predictive models for vector abundance and disease risk. The DiseaseBurden table, while not utilized in the current analysis, represents a critical component for future work that will explore relationships between vector dynamics and health outcomes.
+
+Ultimately, this work contributes to the broader goal of improving vector-borne disease surveillance and control in sub-Saharan Africa by providing a standardized framework for integrating the diverse data streams necessary for understanding complex disease systems. The lessons learned from this implementation (both successes and challenges) will inform future iterations of the model and guide similar efforts in other regions and disease systems.
+
+\section*{Acknowledgments}
+
+This research was supported by the International Center of Insect Physiology and Ecology (ICIPE), the University of KwaZulu-Natal, and the International Institute of Tropical Agriculture (IITA). We acknowledge the providers of the open data used in this study, including GBIF, the Copernicus Climate Change Service (ERA5-Land), the Malaria Atlas Project, and the Vector Atlas consortium. We particularly thank the data contributors and curators who make their work publicly available, enabling research of this nature.
+
+\bibliographystyle{apalike}
+\bibliography{bibliography.bib}
+
+\end{document}
