@@ -26,24 +26,26 @@ if [ ! -f "$FILENAME.tex" ]; then
     exit 1
 fi
 
+mkdir -p build pdfs words
+rm -f build/"$FILENAME".{aux,bbl,blg,log,out,toc,lof,lot}
+
 # --- PDF generation (if needed) ---
 if [ "$MODE" = "--pdf-only" ] || [ "$MODE" = "--both" ]; then
     echo "--- Compiling LaTeX to PDF (with bibliography) ---"
-    mkdir -p build pdfs
-    rm -f build/"$FILENAME".{aux,bbl,blg,log,out,toc,lof,lot}
 
+    # First pass
     pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
-    if [ $? -ne 0 ]; then
-        echo "Error: First pdflatex pass failed. Check build/$FILENAME.log"
-        exit 1
-    fi
+    # BibTeX (ignore errors if no citations)
+    bibtex build/"$FILENAME".aux 2>/dev/null
 
-    bibtex build/"$FILENAME".aux
-
+    # Second pass
     pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex" > /dev/null
+    # Third pass (final) – we check existence of PDF, not exit code
     pdflatex -interaction=nonstopmode -output-directory=build "$FILENAME.tex"
-    if [ $? -eq 0 ]; then
-        mv "build/$FILENAME.pdf" "pdfs/"
+
+    PDF_SRC="build/$FILENAME.pdf"
+    if [ -f "$PDF_SRC" ]; then
+        mv "$PDF_SRC" "pdfs/"
         echo "PDF saved to pdfs/$FILENAME.pdf"
     else
         echo "Error: PDF compilation failed. Check build/$FILENAME.log"
@@ -56,20 +58,19 @@ if [ "$MODE" = "--word-only" ] || [ "$MODE" = "--both" ]; then
     echo "--- Converting LaTeX to Word (DOCX) using pandoc ---"
     mkdir -p words
 
-    # Check if pandoc is installed
     if ! command -v pandoc &> /dev/null; then
         echo "Error: pandoc not installed. Install with: sudo apt install pandoc"
         exit 1
     fi
 
-    # Download a standard CSL if not present (for proper citation formatting)
+    # Download a standard CSL if not present
     CSL_FILE="chicago-author-date.csl"
     if [ ! -f "$CSL_FILE" ]; then
         echo "Downloading CSL style..."
         curl -s -L -o "$CSL_FILE" "https://raw.githubusercontent.com/citation-style-language/styles/master/chicago-author-date.csl"
     fi
 
-    # Run pandoc with natbib and citeproc (no crossref filter)
+    # Run pandoc (without crossref filter to avoid conflicts)
     pandoc "$FILENAME.tex" \
         --from latex \
         --to docx \
@@ -84,7 +85,7 @@ if [ "$MODE" = "--word-only" ] || [ "$MODE" = "--both" ]; then
 
     if [ $? -eq 0 ] && [ -f "words/$FILENAME.docx" ]; then
         echo "Word document saved to words/$FILENAME.docx"
-        echo "Note: Cross-references (\\ref{}) are not automatically resolved in the Word output."
+        echo "Note: Cross-references (\\ref{}) are not automatically resolved in Word."
     else
         echo "Error: pandoc conversion failed."
         exit 1
