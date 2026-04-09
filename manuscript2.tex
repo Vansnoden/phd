@@ -47,44 +47,138 @@
 \maketitle
 
 \section*{abstract}
-\textbf{Background}: Vector-borne diseases (VBDs) remain a significant public health challenge in Africa, exacerbated by severe data gaps in rapidly urbanizing regions. Traditional statistical models often lack the granularity to capture the complex interplay between invasive vectors, such as Anopheles stephensi, and urban micro-climates. \textbf{Methods}: We present a novel, high-performance rule-based Multi-Agent Simulation (MAS) framework designed to synthesize spatio-temporal vector dynamics. The architecture utilizes a concurrent spatial registry with StampedLock optimization and an object-pooling lifecycle manager to ensure scalability on standard hardware. We validated the framework using a 60-day case study across a 5 km radius of Dire Dawa, Ethiopia, integrating heterogeneous GIS layers including elevation, temperature, and 10000 urban water infrastructure points. \textbf{Results}: The simulation successfully managed a peak population of 250,000 active agents, maintaining a high computational throughput of 1.27 million agent-rule evaluations per second with an average tick time of 26.75 ms. Biological outputs revealed a distinct population "tipping point" as mean temperatures exceeded 30°C, with a final survival of 2.2\% (5,487 agents). Surviving agents exhibited highly significant spatial clustering, maintaining a consistent mean proximity of ~45 meters to water infrastructure, validating the model’s ability to simulate urban micro-climate. Conclusion: This framework provides a robust, scalable tool for generating biologically grounded synthetic data. By identifying environmental "tipping points" and infrastructure-led persistence, it offers a viable decision-support solution for vector surveillance in resource-constrained and data-scarce urban environments.
+\textbf{Background}: Vector-borne diseases (VBDs) remain a significant public health challenge in Africa, 
+exacerbated by severe data gaps in rapidly urbanizing regions. Traditional statistical models often lack 
+the granularity to capture the complex interplay between invasive vectors, such as Anopheles stephensi, 
+and urban micro-climates. \textbf{Methods}: We present a novel, high-performance rule-based Multi-Agent 
+Simulation (MAS) framework designed to synthesize spatio-temporal vector dynamics. The architecture utilizes 
+a concurrent spatial registry with StampedLock optimization and an object-pooling lifecycle manager to ensure 
+scalability on standard hardware. We validated the framework using a 60-day case study across a 5 km radius of 
+Dire Dawa, Ethiopia, integrating heterogeneous GIS layers including elevation, temperature, and 10000 urban 
+water infrastructure points. \textbf{Results}: The simulation successfully managed a peak population of 250,000 
+active agents, maintaining a high computational throughput of 1.27 million agent-rule evaluations per second with 
+an average tick time of 26.75 ms. Biological outputs revealed a distinct population "tipping point" as mean 
+temperatures exceeded 30°C, with a final survival of 2.2\% (5,487 agents). Surviving agents exhibited highly 
+significant spatial clustering, maintaining a consistent mean proximity of ~45 meters to water infrastructure,
+ validating the model's ability to simulate urban micro-climate. Conclusion: This framework provides a robust, 
+ scalable tool for generating biologically grounded synthetic data. By identifying environmental "tipping points" 
+ and infrastructure-led persistence, it offers a viable decision-support solution for vector surveillance in 
+ resource-constrained and data-scarce urban environments.
 
 \paragraph{Keywords:} mutli-agent systems, vector-borne disease, high performance computing, vector  surveillance, vector control.
 
 \section{Introduction}
 \par
-Vector-borne diseases (VBDs) represent one of the most profound challenges to global health security, accounting for approximately 700,000 deaths annually and imposing significant economic burdens on developing nations \citep{2025.RL.HMD}. Malaria alone threatens nearly half the world's population, with Sub-Saharan Africa bearing 94\% of the global case burden as \citep{2024.WH.WWM}. While the past two decades witnessed substantial reductions in malaria mortality through coordinated interventions, this hard-won progress faces unprecedented threats from ecological and demographic shifts. The rapid urbanization of Sub-Saharan Africa, currently the world's fastest urbanizing region \citep{2019.IS.UAI}, has created novel transmission ecologies that challenge historical assumptions about vector ecology and control strategies \citep{2024.NK.MBD}.
+Vector-borne diseases (VBDs) represent one of the most profound challenges to global health security, accounting for 
+approximately 700,000 deaths annually and imposing significant economic burdens on developing nations \citep{2025.RL.HMD}. 
+Malaria alone threatens nearly half the world's population, with Sub-Saharan Africa bearing 94\% of the global case burden 
+as \citep{2024.WH.WWM}. While the past two decades witnessed substantial reductions in malaria mortality through coordinated 
+interventions, this hard-won progress faces unprecedented threats from ecological and demographic shifts. 
+The rapid urbanization of Sub-Saharan Africa, currently the world's fastest urbanizing region \citep{2019.IS.UAI}, 
+has created novel transmission ecologies that challenge historical assumptions about vector ecology and control 
+strategies \citep{2024.NK.MBD}.
 \par
-The primary driver of this epidemiological transition is the globalization of previously localized vectors, particularly the invasive malaria mosquito \textit{Anopheles stephensi}. Unlike endemic African malaria vectors that predominantly breed in natural water bodies, \textit{An. stephensi} exhibits remarkable ecological plasticity, thriving in artificial containers and man-made structures characteristic of urban environments \citep{2025.GC.SAB}. This species shares critical adaptive traits with \textit{Aedes aegypti}, the primary dengue vector, including container breeding, anthropophily, and exophilic resting behaviors \citep{2022.AH.TPI}. The consequences of this adaptation were discored in Djibouti, where\textit{ An. stephensi} establishment triggered a 30-fold increase in malaria cases within seven years, transforming a nation on the verge of malaria elimination into a high-transmission zone \citep{2022.AH.TPI}. This vector's capacity to exploit previously low-risk urban settings necessitates fundamentally new approaches to surveillance, modeling, and intervention design \citep{2024.TM.AQA}.
+The primary driver of this epidemiological transition is the globalization of previously localized vectors, particularly 
+the invasive malaria mosquito \textit{Anopheles stephensi}. Unlike endemic African malaria vectors that predominantly 
+breed in natural water bodies, \textit{An. stephensi} exhibits remarkable ecological plasticity, thriving in artificial 
+containers and man-made structures characteristic of urban environments \citep{2025.GC.SAB}. This species shares critical 
+adaptive traits with \textit{Aedes aegypti}, the primary dengue vector, including container breeding, anthropophily, and 
+exophilic resting behaviors \citep{2022.AH.TPI}. The consequences of this adaptation were discored in Djibouti, 
+where\textit{ An. stephensi} establishment triggered a 30-fold increase in malaria cases within seven years, transforming a 
+nation on the verge of malaria elimination into a high-transmission zone \citep{2022.AH.TPI}. This vector's capacity to exploit 
+previously low-risk urban settings necessitates fundamentally new approaches to surveillance, modeling, and 
+intervention design \citep{2024.TM.AQA}.
 \par
-A critical bottleneck in responding to this emerging threat is the pervasive "Data Gap" characterizing many resource-constrained settings where \textit{An. stephensi} is establishing. Effective vector control relies on robust decision-support systems built upon high-quality, high-resolution entomological and epidemiological data, yet national surveillance programs often operate with limited financial and technological resources \citep{2025.RL.HMD}. Current modeling approaches struggle to bridge the gap between theoretical elegance and practical utility: empirical models propagate measurement errors through unreliable data streams, while process-based models frequently lack the spatial granularity and computational efficiency needed for operational deployment \citep{2025.RL.HMD}. This disconnect is particularly acute for invasive vectors, where absence of historical baseline data undermines traditional statistical approaches \citep{2019.EL.ALO}.
+A critical bottleneck in responding to this emerging threat is the pervasive "Data Gap" characterizing many resource-constrained 
+settings where \textit{An. stephensi} is establishing. Effective vector control relies on robust decision-support systems built 
+upon high-quality, high-resolution entomological and epidemiological data, yet national surveillance programs often operate with 
+limited financial and technological resources \citep{2025.RL.HMD}. Current modeling approaches struggle to bridge the gap between 
+theoretical elegance and practical utility: empirical models propagate measurement errors through unreliable data streams, while 
+process-based models frequently lack the spatial granularity and computational efficiency needed for operational 
+deployment \citep{2025.RL.HMD}. This disconnect is particularly acute for invasive vectors, where absence of historical 
+baseline data undermines traditional statistical approaches \citep{2019.EL.ALO}.
 \par
-To address these challenges, we propose a novel computational framework that integrates high-performance computing methodologies with ecological process modeling. Our system implements a layered, rule-based Multi-Agent Simulation (MAS) architecture that harmonizes heterogeneous spatio-temporal data streams into a unified analytical environment. This framework is part of the family of ABS (Agent Based Simulation) which are simulation models where the researcher explicitly describe the decision processes of simulated actors at micro-level \citep{2008.PO.ITM}. The proposed framework bridges Computer Science and Environmental Science by conceptualizing environmental data as dynamic information layers, including static rasters (for instance: elevation, building density, population density), time-series climate variables, and vector data (shapefiles), that interact with autonomous agent populations. We distinguish between two agent classes: "Inert Agents" representing static environmental features (urban water containers serving as breeding sites) and "Living Agents" modeling biological vectors (An. stephensi mosquitoes for example) with behavioral rules derived from empirical studies.
+To address these challenges, we propose a novel computational framework that integrates high-performance computing methodologies 
+with ecological process modeling. Our system implements a layered, rule-based Multi-Agent Simulation (MAS) architecture that 
+harmonizes heterogeneous spatio-temporal data streams into a unified analytical environment. This framework is part of the 
+family of ABS (Agent Based Simulation) which are simulation models where the researcher explicitly describe the decision 
+processes of simulated actors at micro-level \citep{2008.PE.ITM}. The proposed framework bridges Computer Science and 
+Environmental Science by conceptualizing environmental data as dynamic information layers, including static rasters (for instance: 
+elevation, building density, population density), time-series climate variables, and vector data (shapefiles), that interact with 
+autonomous agent populations. We distinguish between two agent classes: "Inert Agents" representing static environmental features 
+(urban water containers serving as breeding sites) and "Living Agents" modeling biological vectors (An. stephensi mosquitoes for 
+example) with behavioral rules derived from empirical studies.
 \par
-This study demonstrates how such synthetic modeling approaches can provide critical insights where field data are scarce or unreliable. Using Dire Dawa, an Ethiopian city experiencing \textit{An. stephensi} invasion, as a proof-of-concept, we simulate 60 days of mosquito population dynamics across a 5 km radius from city's centroid. Our results illustrate how agent-based modeling can identify high-risk micro-habitats, simulate seasonal population trajectories, and potentially assist intervention strategies in data-limited settings. By making the simulation framework open-source and computationally efficient, we aim to empower public health agencies in resource-constrained regions with decision-support tools capable of addressing the unique challenges posed by urban-adapted invasive vectors.
+This study demonstrates how such synthetic modeling approaches can provide critical insights where field data are scarce or 
+unreliable. Using Dire Dawa, an Ethiopian city experiencing \textit{An. stephensi} invasion, as a proof-of-concept, we simulate 
+60 days of mosquito population dynamics across a 5 km radius from city's centroid. Our results illustrate how agent-based modeling 
+can identify high-risk micro-habitats, simulate seasonal population trajectories, and potentially assist intervention strategies 
+in data-limited settings. By making the simulation framework open-source and computationally efficient, we aim to empower public 
+health agencies in resource-constrained regions with decision-support tools capable of addressing the unique challenges posed 
+by urban-adapted invasive vectors.
 
 
 \section{Literature review}
 
 \subsection{Limitations of traditional epidemiological models in urban contexts}
 \par
-Conventional compartmental models, notably the SIR (Susceptible-Infectious-Recovered) and SEIR (Susceptible-Exposed-Infectious-Recovered) frameworks have formed the backbone of infectious disease modeling for decades \citep{1927.WK.ACT}. These models excel in population-level analysis under the critical assumption of homogeneous mixing, where transmission probability depends solely on the proportions of susceptible and infectious individuals. However, this fundamental assumption becomes problematic when applied to urban malaria transmission dynamics, particularly for container-breeding vectors like \textit{Anopheles stephensi}. Urban environments exhibit pronounced spatial heterogeneity in both vector breeding sites (limited to artificial water containers) and human populations (varying building densities and socioeconomic factors), creating transmission hotspots that compartmental models cannot capture \citep{2020.SM.TIO}. Furthermore, traditional models lack the spatial granularity necessary for targeted interventions, which require identification of specific breeding site clusters rather than uniform area-wide approaches \citep{2016.ST.OTI}. These limitations become particularly acute when modeling invasive species adapting to novel urban ecologies, where transmission dynamics deviate substantially from rural patterns \citep{2020.MS.ANM}.
+Conventional compartmental models, notably the SIR (Susceptible-Infectious-Recovered) and SEIR (Susceptible-Exposed-Infectious-Recovered) 
+frameworks have formed the backbone of infectious disease modeling for decades \citep{1927.WI.ACO}. These models excel in population-level 
+analysis under the critical assumption of homogeneous mixing, where transmission probability depends solely on the proportions of 
+susceptible and infectious individuals. However, this fundamental assumption becomes problematic when applied to urban malaria transmission 
+dynamics, particularly for container-breeding vectors like \textit{Anopheles stephensi}. Urban environments exhibit pronounced spatial 
+heterogeneity in both vector breeding sites (limited to artificial water containers) and human populations (varying building densities 
+and socioeconomic factors), creating transmission hotspots that compartmental models cannot capture \citep{2020.SM.TIO}. Furthermore, 
+traditional models lack the spatial granularity necessary for targeted interventions, which require identification of specific breeding 
+site clusters rather than uniform area-wide approaches \citep{2016.ST.OTI}. These limitations become particularly acute when modeling 
+invasive species adapting to novel urban ecologies, where transmission dynamics deviate substantially from rural patterns \citep{2020.MS.ANM}.
 
 \subsection{Agent-Based Modeling in Ecological Applications: Capabilities and Constraints}
 \par 
-ABM (Agent-Based Modeling) emerged as a powerful alternative to compartmental models by representing individual entities (agents) with autonomous behaviors and localized interactions \citep{2006.VG.ASP}. In vector ecology, platforms like NetLogo and GAMA have enabled researchers to simulate mosquito behaviors, life cycles, and host-seeking patterns \citep{2010.PT.GAS,2013.AD.GMA,2024.RR.COE}. These tools excel at modeling small-scale ecological processes such as oviposition site selection or sugar feeding behavior, hrough intuitive visual programming interfaces and extensive libraries of pre-built ecological functions \citep{2020.SF.BLF}. However, their architecture encounters significant limitations when scaling to city-wide simulations with millions of agents and complex environmental datasets \citep{2021.DG.DMI}. Performance constraints arise from interpretive execution (NetLogo) and limited parallelization capabilities, typically restricting simulations to tens of thousands of agents before computational overhead becomes prohibitive \citep{2024.RR.COE,2024.CG.LLM}. More critically, these platforms exhibit limited capacity for deep integration with multi-layered GIS (Geographic Information System) rasters at native resolutions, a crucial requirement for urban vector modeling where building footprints, elevation, and population density operate at different spatial scales and require simultaneous querying during agent decision-making. The "drag-and-drop" paradigm, while accessible, sacrifices computational efficiency and customizability, particularly for memory-intensive operations like temporal interpolation of climate data across thousands of simulation ticks \citep{2021.DG.DMI, 2013.AD.GMA}. These constraints necessitate custom solutions when modeling regional-scale vector populations with high spatiotemporal resolution.
+ABM (Agent-Based Modeling) emerged as a powerful alternative to compartmental models by representing individual entities (agents) with 
+autonomous behaviors and localized interactions \citep{2006.VO.ASP}. In vector ecology, platforms like NetLogo and GAMA have enabled 
+researchers to simulate mosquito behaviors, life cycles, and host-seeking patterns \citep{2010.PA.GAS,2013.AD.GMA,2024.RR.COE}. These 
+tools excel at modeling small-scale ecological processes such as oviposition site selection or sugar feeding behavior, hrough intuitive 
+visual programming interfaces and extensive libraries of pre-built ecological functions \citep{2020.SF.BLF}. However, their architecture 
+encounters significant limitations when scaling to city-wide simulations with millions of agents and complex environmental datasets 
+\citep{2021.DG.DMI}. Performance constraints arise from interpretive execution (NetLogo) and limited parallelization capabilities, 
+typically restricting simulations to tens of thousands of agents before computational overhead becomes prohibitive 
+\citep{2024.RR.COE,2024.CG.LLM}. More critically, these platforms exhibit limited capacity for deep integration with multi-layered 
+GIS (Geographic Information System) rasters at native resolutions, a crucial requirement for urban vector modeling where building 
+footprints, elevation, and population density operate at different spatial scales and require simultaneous querying during agent 
+decision-making. The "drag-and-drop" paradigm, while accessible, sacrifices computational efficiency and customizability, 
+particularly for memory-intensive operations like temporal interpolation of climate data across thousands of simulation ticks 
+\citep{2021.DG.DMI, 2013.AD.GMA}. These constraints necessitate custom solutions when modeling regional-scale vector populations 
+with high spatiotemporal resolution.
 
 \subsection{High-Performance Computing Approaches in Multi-Agent Systems}
 \par
-Recent advances in MAS (Multi-Agent Systems) for ecological applications have increasingly leveraged High-Performance Computing (HPC) architectures to overcome scalability limitations. Contemporary frameworks emphasize concurrent data structures and spatial indexing algorithms that enable efficient simulation of millions of interacting agents across distributed computing environments. The spatial indexing challenge, rapidly identifying neighbors within agent perception raduis, has driven innovation in grid-based partitioning, quad-trees, and R-tree implementations optimized for parallel access patterns \citep{2021.DG.DMI}. Thread-safety mechanisms, particularly Java's StampedLock with optimistic read patterns, have demonstrated order-of-magnitude improvements over traditional synchronization methods by allowing concurrent read operations during intensive spatial queries while maintaining data consistency for position updates. These technical considerations justify the development of custom simulation engines over pre-packaged solutions: while commercial and open-source platforms provide rapid prototyping capabilities, they often lack the low-level control required for memory-mapped raster access, lock-free concurrent data structures, and cache-aware spatial indexing necessary for large-scale simulations. The present framework addresses these gaps through a Java-based architecture that balances object-oriented design with HPC optimizations, enabling simulation of $ \geq $ 500,000 agents with integrated environmental layers while maintaining sub-second tick times; performance characteristics unattainable with general-purpose ABM platforms \citep{2024.RR.COE}.
+Recent advances in MAS (Multi-Agent Systems) for ecological applications have increasingly leveraged High-Performance Computing 
+(HPC) architectures to overcome scalability limitations. Contemporary frameworks emphasize concurrent data structures and spatial 
+indexing algorithms that enable efficient simulation of millions of interacting agents across distributed computing environments. 
+The spatial indexing challenge, rapidly identifying neighbors within agent perception raduis, has driven innovation in grid-based 
+partitioning, quad-trees, and R-tree implementations optimized for parallel access patterns \citep{2021.DG.DMI}. Thread-safety 
+mechanisms, particularly Java's StampedLock with optimistic read patterns, have demonstrated order-of-magnitude improvements over 
+traditional synchronization methods by allowing concurrent read operations during intensive spatial queries while maintaining data 
+consistency for position updates. These technical considerations justify the development of custom simulation engines over pre-packaged 
+solutions: while commercial and open-source platforms provide rapid prototyping capabilities, they often lack the low-level control 
+required for memory-mapped raster access, lock-free concurrent data structures, and cache-aware spatial indexing necessary for 
+large-scale simulations. The present framework addresses these gaps through a Java-based architecture that balances object-oriented 
+design with HPC optimizations, enabling simulation of $ \geq $ 500,000 agents with integrated environmental layers while 
+maintaining sub-second tick times; performance characteristics unattainable with general-purpose ABM platforms \citep{2024.RR.COE}.
 
 \section{Materials \& Methods}
 \par
-We developed a novel, high-performance agent-based modeling framework to simulate urban mosquito population dynamics in urban environments. The system integrates heterogeneous environmental datasets with behavioral rules to model mosquito life cycles, breeding site utilization, and human-vector interactions at fine spatiotemporal resolutions.
+We developed a novel, high-performance agent-based modeling framework to simulate urban mosquito population dynamics in urban 
+environments. The system integrates heterogeneous environmental datasets with behavioral rules to model mosquito life cycles, 
+breeding site utilization, and human-vector interactions at fine spatiotemporal resolutions.
 
 \subsection{Framework Architecture and Computational Design}
 \par 
-The Multi-Agent Simulation (MAS) system was implemented as an object-oriented Java framework designed specifically for the computational demands of regional-scale vector modeling. The framework's architecture was built around several core design principles: modularity for integrating diverse data sources, performance optimization for handling large agent populations, and flexibility for adapting to different mosquito species and environmental contexts (see Figure \ref{fig:arch}).
+The Multi-Agent Simulation (MAS) system was implemented as an object-oriented Java framework designed specifically for the computational 
+demands of regional-scale vector modeling. The framework's architecture was built around several core design principles: modularity 
+for integrating diverse data sources, performance optimization for handling large agent populations, and flexibility for adapting to 
+different mosquito species and environmental contexts (see Figure \ref{fig:arch}).
 
 \begin{figure}[!htb]
 	\centering
@@ -95,55 +189,127 @@ The Multi-Agent Simulation (MAS) system was implemented as an object-oriented Ja
 
 \subsubsection{Layered Information Model}
 \par 
-The environmental representation follows a stacked-layer paradigm where heterogeneous data sources are integrated into a unified spatial framework. Static environmental variables are managed through specialized raster layer management classes. These classes implement efficient coordinate-to-value mapping using georeferenced bounding boxes and bilinear interpolation, enabling agents to query localized environmental conditions during simulation runtime with minimal computational overhead. Specifically, for memory-intensive datasets exceeding 100 mega bites, we implemented MemoryMappedRasterLayer class which utilizes Java's NIO (New Input/Output) memory-mapped file channels, allowing direct access to disk-based raster data without loading entire datasets into heap memory. This approach reduces memory footprint by approximately 70\% for large-scale simulations while maintaining sub-millisecond access times for environmental queries.
+The environmental representation follows a stacked-layer paradigm where heterogeneous data sources are integrated into a unified spatial 
+framework. Static environmental variables are managed through specialized raster layer management classes. These classes implement efficient 
+coordinate-to-value mapping using georeferenced bounding boxes and bilinear interpolation, enabling agents to query localized environmental 
+conditions during simulation runtime with minimal computational overhead. Specifically, for memory-intensive datasets exceeding 100 mega 
+bites, we implemented MemoryMappedRasterLayer class which utilizes Java's NIO (New Input/Output) memory-mapped file channels, allowing 
+direct access to disk-based raster data without loading entire datasets into heap memory. This approach reduces memory footprint by 
+approximately 70\% for large-scale simulations while maintaining sub-millisecond access times for environmental queries.
 \par
-Spatiotemporal climate variables in NetCDF(Network Common Data Form) require specialized handling due to their time-varying nature. The InterpolatedRasterLayer class implements a three-dimensional data structure [time][latitude][longitude] with linear temporal interpolation between hourly climate reanalysis timesteps. The class maintains an in-memory cache of interpolated values for the current simulation time, using a ReentrantReadWriteLock synchronization mechanism that allows concurrent read access by thousands of agents while ensuring thread-safe updates during temporal transitions. This design can for instance enable smooth diurnal temperature cycles and precipitation events to influence agent behavior without computational bottlenecks.
+Spatiotemporal climate variables in NetCDF(Network Common Data Form) require specialized handling due to their time-varying nature. 
+The InterpolatedRasterLayer class implements a three-dimensional data structure [time][latitude][longitude] with linear temporal 
+interpolation between hourly climate reanalysis timesteps. The class maintains an in-memory cache of interpolated values for the 
+current simulation time, using a ReentrantReadWriteLock synchronization mechanism that allows concurrent read access by thousands 
+of agents while ensuring thread-safe updates during temporal transitions. This design can for instance enable smooth diurnal temperature 
+cycles and precipitation events to influence agent behavior without computational bottlenecks.
 
 \subsubsection{Agent Representation and Management}
 \par
-The framework distinguishes between two fundamental agent classes based on mobility and autonomy.  LivingAgent class in designed for entities with comprehensive internal state management, in our case mosquitoes, including: (1) developmental stage (egg, larva, pupa, adult) with stage-specific physiological parameters, (2) energy reserves (0.0-1.0 scale) depleted by activity and replenished through feeding, (3) age (in 15-minute simulation ticks) tracking cumulative exposure, (4) gravidity status indicating reproductive readiness, and (5) behavioral state (resting, active, seeking). These state variables are implemented using atomic data types (AtomicBoolean, AtomicInteger, AtomicReference) to ensure thread-safe concurrent modification during parallel rule evaluation.
+The framework distinguishes between two fundamental agent classes based on mobility and autonomy.  LivingAgent class in designed for 
+entities with comprehensive internal state management, in our case mosquitoes, including: (1) developmental stage (egg, larva, pupa, adult) 
+with stage-specific physiological parameters, (2) energy reserves (0.0-1.0 scale) depleted by activity and replenished through feeding, (3) 
+age (in 15-minute simulation ticks) tracking cumulative exposure, (4) gravidity status indicating reproductive readiness, and (5) behavioral 
+state (resting, active, seeking). These state variables are implemented using atomic data types (AtomicBoolean, AtomicInteger, AtomicReference) 
+to ensure thread-safe concurrent modification during parallel rule evaluation.
 \par
-The InertAgent class is designed for stationary entities that maintain an evolving internal state throughout the simulation. These agents represent static environmental features (such as water containers or breeding sites) that interact dynamically with living agents at runtime. Although they lack autonomous movement, they remain active participants in the ecosystem’s logic.
-Agent organization follows a hierarchical structure where agents are grouped into layers managed by the AgentLayer class. Each agent layer hosts a homogeneous population of either living or inert agents. This separation allows for differentiated rule sets and update frequencies optimized for each agent type. The AgentContainer class within each layer implements a partitioned storage system that distributes agents across multiple thread-safe queues, enabling parallel processing during simulation ticks with minimal inter-thread contention.
+The InertAgent class is designed for stationary entities that maintain an evolving internal state throughout the simulation. These agents 
+represent static environmental features (such as water containers or breeding sites) that interact dynamically with living agents at runtime. 
+Although they lack autonomous movement, they remain active participants in the ecosystem's logic. Agent organization follows a hierarchical 
+structure where agents are grouped into layers managed by the AgentLayer class. Each agent layer hosts a homogeneous population of either 
+living or inert agents. This separation allows for differentiated rule sets and update frequencies optimized for each agent type. The 
+AgentContainer class within each layer implements a partitioned storage system that distributes agents across multiple thread-safe queues, 
+enabling parallel processing during simulation ticks with minimal inter-thread contention.
 
 \subsubsection{Performance Optimization}
 \par 
-Simulating urban-scale mosquito populations ($ \geq $ 500,000 agents) necessitated several computational optimizations. To this end, we design a SpatialRegistry class that implements a grid-based spatial indexing system with 0.001-degree resolution (~111-meter cells), providing O(1) access time for agent position updates and neighbor queries. We employed Java's StampedLock synchronization primitive which supports optimistic read locking, allowing concurrent read operations during the intensive neighbor-finding phase of agent rule evaluation while maintaining data consistency for position updates.
+Simulating urban-scale mosquito populations ($ \geq $ 500,000 agents) necessitated several computational optimizations. To this end, 
+we design a SpatialRegistry class that implements a grid-based spatial indexing system with 0.001-degree resolution (~111-meter cells),
+ providing O(1) access time for agent position updates and neighbor queries. We employed Java's StampedLock synchronization primitive 
+ which supports optimistic read locking, allowing concurrent read operations during the intensive neighbor-finding phase of agent rule 
+ evaluation while maintaining data consistency for position updates.
 \par
-To address the high object turnover inherent in mosquito population dynamics (daily birth/death rates ~10\%), we implemented an object pooling system through the AgentLifecycleManager class. This manager maintains recyclable agent instances in size-limited pools (maximum 10,000 agents per type), significantly reducing garbage collection pauses by reinitializing rather than reallocating agent objects. During simulation execution, birth events draw from these pools (cache hit ~85\%), while deceased agents are returned for future reuse rather than being garbage collected.
+To address the high object turnover inherent in mosquito population dynamics (daily birth/death rates ~10\%), we implemented an 
+object pooling system through the AgentLifecycleManager class. This manager maintains recyclable agent instances in size-limited 
+pools (maximum 10,000 agents per type), significantly reducing garbage collection pauses by reinitializing rather than reallocating 
+agent objects. During simulation execution, birth events draw from these pools (cache hit ~85\%), while deceased agents are returned 
+for future reuse rather than being garbage collected.
 \par
-Batch processing further enhances performance by aggregating lifecycle events (births, deaths, movements) into bulk operations. The system accumulates individual events throughout the rule evaluation phase, then processes them collectively using optimized bulk operations in the SpatialRegistry, reducing synchronization overhead by up to 90\% compared to individual event processing.
+Batch processing further enhances performance by aggregating lifecycle events (births, deaths, movements) into bulk operations. The 
+system accumulates individual events throughout the rule evaluation phase, then processes them collectively using optimized bulk 
+operations in the SpatialRegistry, reducing synchronization overhead by up to 90\% compared to individual event processing.
 
 \subsection{Rule-Based Logic and Decision Engine}
 \par 
-Agent decision-making follows a modular rule-based paradigm implemented in the RuleEngine class. Each rule consists of three components: (1) a condition expressed in JavaScript syntax, (2) an action identifier from a predefined set of behavioral primitives, and (3) a priority integer determining evaluation order when multiple conditions are satisfied. The rule engine utilizes the GraalVM polyglot runtime to evaluate conditions within isolated JavaScript contexts, providing sandboxed execution while maintaining high performance (~100,000 rule evaluations/second/core).
+Agent decision-making follows a modular rule-based paradigm implemented in the RuleEngine class. Each rule consists of three 
+components: (1) a condition expressed in JavaScript syntax, (2) an action identifier from a predefined set of behavioral primitives, 
+and (3) a priority integer determining evaluation order when multiple conditions are satisfied. The rule engine utilizes the GraalVM 
+polyglot runtime to evaluate conditions within isolated JavaScript contexts, providing sandboxed execution while maintaining high 
+performance (~100,000 rule evaluations/second/core).
 \par
-Rules are parameterized through a token system that maps environmental layer names to accessible variables within condition expressions. For example, a temperature raster layer named "t2m" can be accessed via the token "temperature" in rule conditions. This abstraction layer decouples rule logic from underlying data structures, allowing easy rule modifications and human readability. The engine maintains a thread-local cache of compiled rule conditions, reducing parsing overhead for frequently evaluated rules by approximately 95\%.
+Rules are parameterized through a token system that maps environmental layer names to accessible variables within condition expressions. 
+For example, a temperature raster layer named "t2m" can be accessed via the token "temperature" in rule conditions. This abstraction layer 
+decouples rule logic from underlying data structures, allowing easy rule modifications and human readability. The engine maintains a 
+thread-local cache of compiled rule conditions, reducing parsing overhead for frequently evaluated rules by approximately 95\%.
 \par
-The action repertoire includes biologically grounded behaviors:  "die" (agent mortality), "get\_gravid" (reproductive maturation), "lay\_eggs" (oviposition in suitable containers), "hatch" (egg-to-larva transition), "feed" (energy acquisition), "move\_random" (dispersal), "reproduce" (sexual reproduction), "pupate" (larva-to-pupa metamorphosis), "emerge" (pupa-to-adult eclosion), "dry\_out" (container desiccation), "freeze" (cold-induced mortality), "evaporate" (water loss), "rest"/"stop\_resting" (behavioral state transitions), and "rest\_in\_building" (anthropogenic shelter seeking). Each action modifies agent state variables and/or triggers spatial registry updates, with critical actions (e.g., "die", "lay\_eggs") automatically invalidating spatial caches to maintain data consistency.
+The action repertoire includes biologically grounded behaviors:  "die" (agent mortality), "get\_gravid" (reproductive maturation), 
+"lay\_eggs" (oviposition in suitable containers), "hatch" (egg-to-larva transition), "feed" (energy acquisition), "move\_random" (dispersal), 
+"reproduce" (sexual reproduction), "pupate" (larva-to-pupa metamorphosis), "emerge" (pupa-to-adult eclosion), "dry\_out" (container desiccation), 
+"freeze" (cold-induced mortality), "evaporate" (water loss), "rest"/"stop\_resting" (behavioral state transitions), and "rest\_in\_building" 
+(anthropogenic shelter seeking). Each action modifies agent state variables and/or triggers spatial registry updates, with critical actions 
+(e.g., "die", "lay\_eggs") automatically invalidating spatial caches to maintain data consistency.
 \par
-Rule priorities range from 1 (lowest) to 10 (highest), with higher-priority rules evaluated first. This hierarchy ensures that critical behaviors (e.g., mortality from extreme temperatures at priority 10) supersede less urgent actions (e.g., movement at priority 2). Within each priority level, rules are evaluated sequentially until a terminal action (e.g. "die") executes, at which point further rule evaluation ceases for that agent during the current tick, optimizing computational resources.
+Rule priorities range from 1 (lowest) to 10 (highest), with higher-priority rules evaluated first. This hierarchy ensures that critical 
+behaviors (e.g., mortality from extreme temperatures at priority 10) supersede less urgent actions (e.g., movement at priority 2). Within 
+each priority level, rules are evaluated sequentially until a terminal action (e.g. "die") executes, at which point further rule evaluation 
+ceases for that agent during the current tick, optimizing computational resources.
 
 \subsection{Case Study Design: Anopheles stephensi in Dire Dawa, Ethiopia}
 \subsubsection{Study Area and Justification}
 \par 
-We selected Dire Dawa, Ethiopia (9.604°N, 41.856°E) as our validation case study due to several factors: (1) confirmed presence of invasive Anopheles stephensi based on recent entomological surveys (Balkew et al., 2020; Balkew et al., 2023; Ahmed et al., 2022), (2) representative East African urban ecology with mixed formal/informal settlements, (3) available high-resolution environmental datasets, and (4) epidemiological significance as an emerging malaria transmission zone. Anopheles stephensi presents particular modeling challenges due to its behavioral plasticity; unlike most African malaria vectors, it thrives in urban environments by exploiting anthropogenic water containers for breeding and exhibits both endophilic (indoor-resting) and exophilic (outdoor-resting) behaviors \citep{2020.MS.ANM}.
+We selected Dire Dawa, Ethiopia (9.604°N, 41.856°E) as our validation case study due to several factors: (1) confirmed presence of invasive 
+Anopheles stephensi based on recent entomological surveys (Balkew et al., 2020; Balkew et al., 2023; Ahmed et al., 2022), (2) representative 
+East African urban ecology with mixed formal/informal settlements, (3) available high-resolution environmental datasets, and (4) epidemiological 
+significance as an emerging malaria transmission zone. Anopheles stephensi presents particular modeling challenges due to its behavioral 
+plasticity; unlike most African malaria vectors, it thrives in urban environments by exploiting anthropogenic water containers for breeding 
+and exhibits both endophilic (indoor-resting) and exophilic (outdoor-resting) behaviors \citep{2020.MS.ANM}.
 \par
-The simulation domain encompassed a 5-kilometer radius circular buffer ($ \approx $ 78.5 $km^2$) centered on Dire Dawa's urban city/town. This spatial extent captures the typical flight range of Anopheles stephensi (usually <1 km \citep{1966.MS.FRL}) while including peri-urban transition zones where breeding site availability changes dramatically. The buffer approach also accommodated spatial uncertainty in agent initialization and prevented edge effects from influencing population dynamics.
+The simulation domain encompassed a 5-kilometer radius circular buffer ($ \approx $ 78.5 $km^2$) centered on Dire Dawa's urban city/town. 
+This spatial extent captures the typical flight range of Anopheles stephensi (usually <1 km \citep{1966.MA.FRL}) while including peri-urban 
+transition zones where breeding site availability changes dramatically. The buffer approach also accommodated spatial uncertainty in agent 
+initialization and prevented edge effects from influencing population dynamics.
 
 \subsubsection{Data Integration}
 \par 
-Environmental data integration followed a multi-source, multi-resolution approach. Elevation data (30m resolution) originated from NASA's Shuttle Radar Topography Mission (SRTM), resampled to 100m resolution using cubic convolution to balance detail and computational load. This data was easily accessed via Google Earth Engine API. Building footprints were derived from Google Earth Engine building footprint dataset, with density calculated using 100m grid cells to represent urbanization gradients. Population distribution utilized WorldPop's 100m resolution constrained-adjusted estimates for 2020, providing realistic human host availability.
+Environmental data integration followed a multi-source, multi-resolution approach. Elevation data (30m resolution) originated from 
+NASA's Shuttle Radar Topography Mission (SRTM), resampled to 100m resolution using cubic convolution to balance detail and computational 
+load. This data was easily accessed via Google Earth Engine API. Building footprints were derived from Google Earth Engine building 
+footprint dataset, with density calculated using 100m grid cells to represent urbanization gradients. Population distribution utilized 
+WorldPop's 100m resolution constrained-adjusted estimates for 2020, providing realistic human host availability.
 \par
-Historical climate data timeseries were derived from ERA5-Land reanalysis data at 0.1 degree spatial resolution and hourly temporal resolution. We extracted a 4-month period (September–December 2025) encompassing the post-rainy season when Anopheles stephensi populations typically peak \citep{2023.AK.DAA}. The dataset included 2m temperature (K), total precipitation (m), and derived variables including relative humidity and dew point temperature. These hourly values were temporally interpolated to 15-minute simulation ticks using the InterpolatedRasterLayer class linear interpolation, capturing diurnal temperature fluctuations critical for mosquito physiology.
+Historical climate data timeseries were derived from ERA5-Land reanalysis data at 0.1 degree spatial resolution and hourly temporal 
+resolution. We extracted a 4-month period (September-December 2025) encompassing the post-rainy season when Anopheles stephensi populations 
+typically peak \citep{2023.AK.DAA}. The dataset included 2m temperature (K), total precipitation (m), and derived variables including 
+relative humidity and dew point temperature. These hourly values were temporally interpolated to 15-minute simulation ticks using the 
+InterpolatedRasterLayer class linear interpolation, capturing diurnal temperature fluctuations critical for mosquito physiology.
 \par
-Validation data comprised Anopheles stephensi occurrence records from the Global Biodiversity Information Facility (GBIF), filtered for quality (coordinate uncertainty <1 km) and temporal relevance. These presence-only records provided spatial benchmarks for comparing simulated population distributions against empirical observations.
+Validation data comprised Anopheles stephensi occurrence records from the Global Biodiversity Information Facility (GBIF), filtered 
+for quality (coordinate uncertainty $<$1 km) and temporal relevance. These presence-only records provided spatial benchmarks for comparing 
+simulated population distributions against empirical observations.
 
 \subsubsection{Simulation Parameters}
 \par 
-A 60-day simulation (September 1–October 30, 2025) was initialized with parameter values derived from published Anopheles stephensi ecology (Tables \ref{tab:agent_rules} \& \ref{tab:model_parameters}). Living agents were spatially distributed using a weighted random placement algorithm favoring areas with: (1) building density $>$20\%, (2) population density $>$ 50 persons/$km\sup{2}$, and (3) elevation between 1,000–1,500m. This produced an initial population of 500,000 mosquitoes with stage distribution: 60\% adults, 25\% larvae, 10\% pupae, 5\% eggs, reflecting typical age structure during seasonal peaks \citep{2020.MS.ANM,2020.MB.GDO, 2021.FG.ASM}.
+A 60-day simulation (September 1-October 30, 2025) was initialized with parameter values derived from published Anopheles stephensi 
+ecology (Tables \ref{tab:agent_rules} \& \ref{tab:model_parameters}). Living agents were spatially distributed using a weighted 
+random placement algorithm favoring areas with: (1) building density $>$20\%, (2) population density $>$ 50 persons/$km^{2}$, 
+and (3) elevation between 1,000-1,500m. This produced an initial population of 500,000 mosquitoes with stage distribution: 60\% 
+adults, 25\% larvae, 10\% pupae, 5\% eggs, reflecting typical age structure during seasonal peaks \citep{2020.MS.ANM,2020.MB.GDO, 2021.FG.ASM}.
 \par 
-Inert agents (water containers) were distributed according to a Poisson point process with intensity varying by building density: high-density urban areas ($\geq 40\%$) building coverage) received 4 containers/100 $m^2$, medium-density (20--40\%) received 2 containers/100 $m^2$, and low-density ($< 20\%$) received 1 container/100 $m^2$. Each container initialized with randomized attributes: water volume (30--100\% capacity), egg count (0--50), larval count (0--20), and capacity (100--500 individuals) representing heterogeneous container types from small jars to large water tanks.
+Inert agents (water containers) were distributed according to a Poisson point process with intensity varying by building density: 
+high-density urban areas ($\geq 40\%$) building coverage) received 4 containers/100 $m^2$, medium-density (20--40\%) received 2 
+containers/100 $m^2$, and low-density ($< 20\%$) received 1 container/100 $m^2$. Each container initialized with randomized attributes: 
+water volume (30--100\% capacity), egg count (0--50), larval count (0--20), and capacity (100--500 individuals) representing heterogeneous 
+container types from small jars to large water tanks.
 
 \begin{table}[!htb]
 \centering
@@ -185,11 +351,19 @@ Egg dev. threshold & 287.15 & K (14°C) & Minimum temperature for embryonic deve
 
 \subsubsection{Output and Analysis}
 \par
-The simulation exported comprehensive state snapshots at 100-tick intervals (25 hours real-time), each containing: (1) georeferenced agent positions with complete state vectors, (2) environmental conditions (temperature, precipitation, building density) at each agent's location, (3) container status (water volume, egg/larval counts), and (4) system performance metrics (tick duration, memory usage, agent counts). These CSV-formatted snapshots were stored in CSV (comma separated values) files and later merged into a single file for analysis and visualization.
+The simulation exported comprehensive state snapshots at 100-tick intervals (25 hours real-time), each containing: (1) georeferenced 
+agent positions with complete state vectors, (2) environmental conditions (temperature, precipitation, building density) at each agent's 
+location, (3) container status (water volume, egg/larval counts), and (4) system performance metrics (tick duration, memory usage, agent counts). 
+These CSV-formatted snapshots were stored in CSV (comma separated values) files and later merged into a single file for analysis and visualization.
 \par
-Post-simulation analysis focused on three validation metrics: (1) spatial correlation between simulated adult density and GBIF occurrence records using Ripley's K-function, (2) temporal population trajectory comparison against published seasonal abundance curves for Anopheles stephensi, and (3) container utilization rates compared to larval survey data from similar urban settings. Additionally, we performed sensitivity analysis on key parameters (Table 2 uncertainty ranges) using Latin Hypercube sampling to identify drivers of population dynamics.
+Post-simulation analysis focused on three validation metrics: (1) spatial correlation between simulated adult density and GBIF occurrence records 
+using Ripley's K-function, (2) temporal population trajectory comparison against published seasonal abundance curves for Anopheles stephensi, 
+and (3) container utilization rates compared to larval survey data from similar urban settings. Additionally, we performed sensitivity analysis 
+on key parameters (Table 2 uncertainty ranges) using Latin Hypercube sampling to identify drivers of population dynamics.
 \par
-The computational implementation achieved a sustained performance of approximately 2.5 simulation days per hour of compute time on a 16-core workstation (AMD Ryzen 9 5950X, 64GB RAM), with memory usage stabilizing at 8-12GB after initialization. This performance envelope enables multi-year simulations at urban scales, supporting both research applications and scenario testing for vector control interventions.
+The computational implementation achieved a sustained performance of approximately 2.5 simulation days per hour of compute time on a 16-core 
+workstation (AMD Ryzen 9 5950X, 64GB RAM), with memory usage stabilizing at 8-12GB after initialization. This performance envelope enables 
+multi-year simulations at urban scales, supporting both research applications and scenario testing for vector control interventions.
 
 
 \section{Results}
@@ -198,50 +372,86 @@ The computational implementation achieved a sustained performance of approximate
 \begin{figure}[!htb]
 	\centering
 	\includegraphics[scale=0.45]{figs/dynamics_analysis.png}
-	\caption{This figure illustrates the population trajectory of a large-scale cohort. While the simulation maintained high stability during the first 72 hours (Day 1–3), a significant population decline commenced as temperatures breached the 30°C threshold. This validates the framework's ability to model the thermal sensitivity of\textit{ An. stephensi} in fluctuating urban micro-climates.}
+	\caption{This figure illustrates the population trajectory of a large-scale cohort. While the simulation maintained high stability 
+	during the first 72 hours (Day 1-3), a significant population decline commenced as temperatures breached the 30°C threshold. This 
+	validates the framework's ability to model the thermal sensitivity of\textit{ An. stephensi} in fluctuating urban micro-climates.}
 	\label{fig:dynamics}
 \end{figure}
 
 \begin{figure}[!htb]
 	\centering
 	\includegraphics[scale=0.4]{figs/spatial_clustering.png}
-	\caption{The density heatmaps reveal that mosquito activity is non-random. Agents exhibit intense clustering specifically around the 9,805 "Water Tank" locations. This simulates the vector's known "container-breeding" behavior, providing a visual basis for targeted urban surveillance.}
+	\caption{The density heatmaps reveal that mosquito activity is non-random. Agents exhibit intense clustering specifically around 
+	the 9,805 "Water Tank" locations. This simulates the vector's known "container-breeding" behavior, providing a visual basis for 
+	targeted urban surveillance.}
 	\label{fig:spatial}
 \end{figure}
 
 \begin{figure}[!htb]
 	\centering
 	\includegraphics[scale=0.5]{figs/proximity_trend.png}
-	\caption{This figure tracks the mean distance of adult mosquitoes to the nearest water source. Even as the total population declined by over 90\%, the remaining survivors remained within a tight radius (~45m) of infrastructure, highlighting the role of water tanks as "refugia" during environmental stress.}
+	\caption{This figure tracks the mean distance of adult mosquitoes to the nearest water source. Even as the total population 
+	declined by over 90\%, the remaining survivors remained within a tight radius (~45m) of infrastructure, highlighting the 
+	role of water tanks as "refugia" during environmental stress.}
 	\label{fig:proxi}
 \end{figure}
 
 \subsection{Spatio-Temporal Population Dynamics}
 \par
-The framework successfully synthesized the complex lifecycle dynamics of 340,126 total mosquito agents over a 60-day period. Initial population states (Day 1.04) showed a robust distribution: 152,081 Adults (61\%), 60,768 Larvae (24\%), and 36,553 Pupae (15\%).
+The framework successfully synthesized the complex lifecycle dynamics of 340,126 total mosquito agents over a 60-day period. 
+Initial population states (Day 1.04) showed a robust distribution: 152,081 Adults (61\%), 60,768 Larvae (24\%), and 36,553 Pupae (15\%).
 \par
-Unlike smaller cohorts, this high-density population exhibited a distinct "resilience phase" before environmental attrition. A precipitous decline was observed as the modeled 2m temperature rose from 26.1°C to a peak of 37.1°C by Day 8.3. By Day 26, the population had stabilized at 5,487 agents, representing a survival rate of 2.2\% of the peak population. This collapse confirms the model's sensitivity to cumulative thermal stress, accurately reflecting the biological limits of the species.
+Unlike smaller cohorts, this high-density population exhibited a distinct "resilience phase" before environmental attrition. 
+A precipitous decline was observed as the modeled 2m temperature rose from 26.1°C to a peak of 37.1°C by Day 8.3. By Day 26, 
+the population had stabilized at 5,487 agents, representing a survival rate of 2.2\% of the peak population. This collapse 
+confirms the model's sensitivity to cumulative thermal stress, accurately reflecting the biological limits of the species.
 
 \subsection{Urban Micro-refugia and Spatial Clustering}
 \par
-Spatial analysis revealed that the vector-infrastructure interface is the primary determinant of persistence. Using k-d tree proximity analysis, the mean distance of adult mosquitoes to the nearest water tank remained remarkably constant between 44.5 and 46.2 meters, despite the massive population flux. As environmental temperatures increased, the spatial density contracted into "hotspots" directly over water tank coordinates. This confirms that \textit{An. stephensi} can persist in arid urban environments provided that human-made water storage infrastructure is available within a 50-meter flight radius.
+Spatial analysis revealed that the vector-infrastructure interface is the primary determinant of persistence. Using k-d 
+tree proximity analysis, the mean distance of adult mosquitoes to the nearest water tank remained remarkably constant 
+between 44.5 and 46.2 meters, despite the massive population flux. As environmental temperatures increased, the spatial 
+density contracted into "hotspots" directly over water tank coordinates. This confirms that \textit{An. stephensi} can 
+persist in arid urban environments provided that human-made water storage infrastructure is available within a 50-meter 
+flight radius.
 
 \subsection{Thermal Constraints and Resource Scarcity}
 \par
-The simulation statistics reveal the intense computational and biological interaction between the vector agents and the urban landscape. The final statistics indicated a total "rules evaluated" count of 58,830 per tick for the water tank layer. This high volume of interaction suggests that despite the vast urban space, mosquito agents consistently localized and interacted with the 9,805 identified resource points.
+The simulation statistics reveal the intense computational and biological interaction between the vector agents and the 
+urban landscape. The final statistics indicated a total "rules evaluated" count of 58,830 per tick for the water tank layer. 
+This high volume of interaction suggests that despite the vast urban space, mosquito agents consistently localized and 
+interacted with the 9,805 identified resource points.
 \par
-The absence of active mosquito agents in the final simulation snapshot (Tick 5760) points to a complete population collapse driven by the environmental "tipping point." This collapse was precipitated by a sustained thermal breach; the modeled 2m temperature exceeded 35.0°C mid-simulation (reaching a peak of 37.1°C), which surpassed the survival threshold for all life stages. This result highlights the framework's utility in identifying specific environmental boundaries where climatic variables override the presence of favorable urban infrastructure, effectively defining the "thermal niche" of An. stephensi in high-altitude or arid regions.
+The absence of active mosquito agents in the final simulation snapshot (Tick 5760) points to a complete population collapse 
+driven by the environmental "tipping point." This collapse was precipitated by a sustained thermal breach; the modeled 2m 
+temperature exceeded 35.0°C mid-simulation (reaching a peak of 37.1°C), which surpassed the survival threshold for all life 
+stages. This result highlights the framework's utility in identifying specific environmental boundaries where climatic 
+variables override the presence of favorable urban infrastructure, effectively defining the "thermal niche" of An. stephensi 
+in high-altitude or arid regions.
 
 \subsection{Computational Scalability and Framework Performance}
 \par
-To evaluate the framework's utility for large-scale urban surveillance, we quantified the computational overhead required to simulate the high-density An. stephensi population. The simulation successfully processed a total of 340,126 mosquito agent life-cycles alongside 9,805 static water infrastructure agents over a 60-day temporal window (5,760 ticks).
+To evaluate the framework's utility for large-scale urban surveillance, we quantified the computational overhead required to 
+simulate the high-density An. stephensi population. The simulation successfully processed a total of 340,126 mosquito agent 
+life-cycles alongside 9,805 static water infrastructure agents over a 60-day temporal window (5,760 ticks).
 \par
-Despite the high agent density, the system maintained high performance with an average tick time of 26.75 ms. The total runtime of 612.85 seconds (approximately 10 minutes) on standard hardware (Memory Total: 1950MB) demonstrates that this rule-based MAS framework is viable for deployment in resource-constrained environments where high-performance computing (HPC) clusters are unavailable.
+Despite the high agent density, the system maintained high performance with an average tick time of 26.75 ms. The total 
+runtime of 612.85 seconds (approximately 10 minutes) on standard hardware (Memory Total: 1950MB) demonstrates that this 
+rule-based MAS framework is viable for deployment in resource-constrained environments where high-performance computing 
+(HPC) clusters are unavailable.
 \par 
-The model's biological fidelity was maintained through the execution of 22 distinct behavior rules for mosquito agents and 6 for water infrastructure. During the simulation, the framework effectively managed the transition of agents through life stages until environmental thresholds were reached. The "Inert" status of the water tank agents allowed for a high volume of spatial queries (averaging 58,830 rule evaluations per tick) without degrading system performance, facilitating a high-resolution analysis of the vector-resource interface.
+The model's biological fidelity was maintained through the execution of 22 distinct behavior rules for mosquito agents and 
+6 for water infrastructure. During the simulation, the framework effectively managed the transition of agents through life 
+stages until environmental thresholds were reached. The "Inert" status of the water tank agents allowed for a high volume 
+of spatial queries (averaging 58,830 rule evaluations per tick) without degrading system performance, facilitating a 
+high-resolution analysis of the vector-resource interface.
 \par
-The spatial registry utilized a fixed search radius of approximately 55.7 meters, mirroring the biological flight range and sensory distance of Anopheles species in urban settings. This parameter ensured that mosquito-water interactions were localized and biologically realistic, leading to the observed clustering patterns around urban containers.
-The framework optimized thread usage via a SimulationEngine with a core pool size of 3, ensuring that even at peak agent density (250,000+ agents), the system avoided memory leaks and maintained a stable thread-state (Uptime: 10.12 minutes). The summary of simulation features and statisctics can be found in Table \ref{tab:sim_metrics}.
+The spatial registry utilized a fixed search radius of approximately 55.7 meters, mirroring the biological flight range 
+and sensory distance of Anopheles species in urban settings. This parameter ensured that mosquito-water interactions were 
+localized and biologically realistic, leading to the observed clustering patterns around urban containers.
+The framework optimized thread usage via a SimulationEngine with a core pool size of 3, ensuring that even at peak agent 
+density (250,000+ agents), the system avoided memory leaks and maintained a stable thread-state (Uptime: 10.12 minutes). 
+The summary of simulation features and statisctics can be found in Table \ref{tab:sim_metrics}.
 
 \begin{table}[!htb]
 \centering
@@ -263,18 +473,60 @@ Total Runtime & 10.21 minutes \\ \bottomrule
 
 \section{Discussion}
 \par 
-The findings of this study demonstrate that a layered, rule-based Multi-Agent Simulation (MAS) provides a sophisticated lens through which to view the invasion dynamics of Anopheles stephensi in urban African landscapes. By bridging high-resolution GIS data with autonomous agent logic, the framework moves beyond the limitations of traditional compartmental models (e.g., SIR or SEIR), which typically assume uniform mixing and spatial homogeneity. In our simulation, the emergence of localized "micro-habitats", where agents remained clustered around water tanks despite a regional temperature-driven population crash (Section 4), underscores the critical importance of micro-spatial granularity. This biological-technical synergy suggests that \textit{An. stephensi} does not persist as a broad regional population, but as a series of highly localized clusters tied to urban infrastructure. For public health authorities in cities like Addis Ababa, this implies that surveillance should not be uniform; instead, a "precision targeting" approach within a 50-meter radius of water storage points is likely to be more effective and resource-efficient.
+The findings of this study demonstrate that a layered, rule-based Multi-Agent Simulation (MAS) provides a sophisticated 
+lens through which to view the invasion dynamics of Anopheles stephensi in urban African landscapes. By bridging 
+high-resolution GIS data with autonomous agent logic, the framework moves beyond the limitations of traditional compartmental 
+models (e.g., SIR or SEIR), which typically assume uniform mixing and spatial homogeneity. In our simulation, the emergence of 
+localized "micro-habitats", where agents remained clustered around water tanks despite a regional temperature-driven population 
+crash (Section 4), underscores the critical importance of micro-spatial granularity. This biological-technical synergy suggests 
+that \textit{An. stephensi} does not persist as a broad regional population, but as a series of highly localized clusters tied 
+to urban infrastructure. For public health authorities in cities like Addis Ababa, this implies that surveillance should not be 
+uniform; instead, a "precision targeting" approach within a 50-meter radius of water storage points is likely to be more effective 
+and resource-efficient.
 \par
-A primary contribution of this research is its ability to address the "data gap" in resource-constrained regions through the generation of high-fidelity synthetic data. Vector-borne disease surveillance in Africa often suffers from a lack of longitudinal field data \citep{2020.MS.ANM}. Our results demonstrate that even when based on fundamental ecological rules, the framework synthesizes population trends that align with established ecological theory, such as the high-altitude thermal barrier. The observation that a peak temperature of 37.1°C triggered a population collapse identifies a specific climatic "tipping point" for \textit{An. stephensi} in the Ethiopian highlands. For policy-makers, this synthetic output serves as a predictive baseline, allowing them to identify potential "hotspots" where the vector might persist during warmer seasons or following rapid changes in urban infrastructure. By simulating these dynamics in silico, we provide a decision-support tool that can guide field teams to vulnerable areas before an outbreak occurs.
+A primary contribution of this research is its ability to address the "data gap" in resource-constrained regions through the 
+generation of high-fidelity synthetic data. Vector-borne disease surveillance in Africa often suffers from a lack of longitudinal 
+field data \citep{2020.MS.ANM}. Our results demonstrate that even when based on fundamental ecological rules, the framework 
+synthesizes population trends that align with established ecological theory, such as the high-altitude thermal barrier. The 
+observation that a peak temperature of 37.1°C triggered a population collapse identifies a specific climatic "tipping point" 
+for \textit{An. stephensi} in the Ethiopian highlands. For policy-makers, this synthetic output serves as a predictive baseline, 
+allowing them to identify potential "hotspots" where the vector might persist during warmer seasons or following rapid changes 
+in urban infrastructure. By simulating these dynamics in silico, we provide a decision-support tool that can guide field teams 
+to vulnerable areas before an outbreak occurs.
 \par
-From a computational perspective, the performance metrics observed in Section 3.4 validate the architectural choices of Object Pooling and Concurrent Spatial Indexing using StampedLock optimizations. The ability to process over 1.27 million agent-rule evaluations per second while maintaining an average tick time of 26.75 ms for a population of 250,000+ agents is significant. It confirms that high-resolution modeling of entire metropolitan areas is computationally feasible on standard research hardware (Memory Total: 1950MB), a prerequisite for deploying such tools in regions where access to high-performance computing (HPC) clusters is limited. Furthermore, the decoupled nature of the Rule Engine provides "plug-and-play" adaptability. This architecture is future-proofed; the same engine could be pivoted to model other neglected tropical diseases (NTDs), such as visceral leishmaniasis, simply by swapping agent-rule definitions for sandflies, without necessitating a redesign of the core spatial or temporal registry.
+From a computational perspective, the performance metrics observed in Section 3.4 validate the architectural choices of Object 
+Pooling and Concurrent Spatial Indexing using StampedLock optimizations. The ability to process over 1.27 million agent-rule 
+evaluations per second while maintaining an average tick time of 26.75 ms for a population of 250,000+ agents is significant. 
+It confirms that high-resolution modeling of entire metropolitan areas is computationally feasible on standard research hardware 
+(Memory Total: 1950MB), a prerequisite for deploying such tools in regions where access to high-performance computing (HPC) 
+clusters is limited. Furthermore, the decoupled nature of the Rule Engine provides "plug-and-play" adaptability. This 
+architecture is future-proofed; the same engine could be pivoted to model other neglected tropical diseases (NTDs), such 
+as visceral leishmaniasis, simply by swapping agent-rule definitions for sandflies, without necessitating a redesign of the 
+core spatial or temporal registry.
 \par
-Despite these strengths, the simulation is not without limitations that warrant further empirical calibration. The rapid population crash observed in the results highlights the high sensitivity of our "Rule Engine" to temperature, which may be modulated in the real world by mosquitoes seeking refuge in indoor environments or cooler micro-climates not fully captured in the 2m temperature raster. Furthermore, while the current 5 km radius covers a substantial urban-peri-urban gradient, the anthropophilic preferences and indoor resting behaviors of \textit{An. stephensi} require more nuanced rule definitions to perfectly match Ethiopian field observations \citep{2021.FG.ASM}. Future work will focus on integrating real-time satellite climate feeds for live forecasting and implementing Genetic Algorithms to auto-calibrate rule thresholds against historical outbreak data. By refining these parameters, the framework will evolve from a synthetic data generator into a live, predictive surveillance asset for vector-borne disease management in the African context.
+Despite these strengths, the simulation is not without limitations that warrant further empirical calibration. The rapid 
+population crash observed in the results highlights the high sensitivity of our "Rule Engine" to temperature, which may be 
+modulated in the real world by mosquitoes seeking refuge in indoor environments or cooler micro-climates not fully captured 
+in the 2m temperature raster. Furthermore, while the current 5 km radius covers a substantial urban-peri-urban gradient, 
+the anthropophilic preferences and indoor resting behaviors of \textit{An. stephensi} require more nuanced rule definitions 
+to perfectly match Ethiopian field observations \citep{2021.FG.ASM}. Future work will focus on integrating real-time satellite 
+climate feeds for live forecasting and implementing Genetic Algorithms to auto-calibrate rule thresholds against historical 
+outbreak data. By refining these parameters, the framework will evolve from a synthetic data generator into a live, predictive 
+surveillance asset for vector-borne disease management in the African context.
 
 
 \section{Conclusion}
 \par 
-We believe this research bridges the gap between high-performance computer science and environmental epidemiology. By developing a custom, rule-based multi-agent architecture, we have demonstrated that it is possible to simulate complex biological systems at scale with high spatial and temporal fidelity. The case study of \textit{Anopheles stephensi} in Dire Dawa town in Ethiopia serves as a critical proof of concept. It confirms that the framework is sensitive to real-world environmental stressors and can be tunned to accurately model vector persistence in marginal climates. This work establishes the foundational engine required for larger-scale continental modeling. The modularity of the RuleEngine ensures that this system is not limited to malaria; it is a platform which should be capable of being tuned to other vector-borne disease such as neglected tropical diseases like visceral leishmaniasis. Ultimately, we believe this framework moves us closer to a "digital twin" of vector ecology, providing the synthetic data necessary to guide life-saving public health interventions in the world’s most vulnerable regions, or regions with surveillance resource constraints.
+We believe this research bridges the gap between high-performance computer science and environmental epidemiology. 
+By developing a custom, rule-based multi-agent architecture, we have demonstrated that it is possible to simulate complex biological 
+systems at scale with high spatial and temporal fidelity. The case study of \textit{Anopheles stephensi} in Dire Dawa town in 
+Ethiopia serves as a critical proof of concept. It confirms that the framework is sensitive to real-world environmental stressors 
+and can be tunned to accurately model vector persistence in marginal climates. This work establishes the foundational engine required 
+for larger-scale continental modeling. The modularity of the RuleEngine ensures that this system is not limited to malaria; it is a 
+platform which should be capable of being tuned to other vector-borne disease such as neglected tropical diseases like visceral 
+leishmaniasis. Ultimately, we believe this framework moves us closer to a "digital twin" of vector ecology, providing the 
+synthetic data necessary to guide life-saving public health interventions in the world's most vulnerable regions, or regions 
+with surveillance resource constraints.
 
 \bibliographystyle{apalike}
 \bibliography{bibliography.bib}
