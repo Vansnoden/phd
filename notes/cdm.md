@@ -137,6 +137,8 @@ erDiagram
     DIM_DISEASE {
         disease_code VARCHAR PK
         disease_name VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
         pathogen VARCHAR
         icd_code VARCHAR
     }
@@ -145,6 +147,8 @@ erDiagram
         vector_code VARCHAR PK
         species_name VARCHAR
         subspecies VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
         genus VARCHAR
         family VARCHAR
     }
@@ -153,6 +157,8 @@ erDiagram
         insecticide_code VARCHAR PK
         insecticide_name VARCHAR
         chemical_class VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
         irac_group VARCHAR
     }
 
@@ -160,12 +166,16 @@ erDiagram
         method_code VARCHAR PK
         method_name VARCHAR
         method_type VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
     }
 
     DIM_RESISTANCE_TEST_TYPE {
         test_type_code VARCHAR PK
         test_type_name VARCHAR
         exposure_time_unit VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
     }
 
     DIM_SOCIOECONOMIC_INDICATOR {
@@ -173,12 +183,15 @@ erDiagram
         indicator_name VARCHAR
         unit VARCHAR
         source VARCHAR
+        description VARCHAR
+        source_standard VARCHAR
     }
 
     DIM_SOURCE {
         source_code VARCHAR PK
         source_name VARCHAR
         source_description VARCHAR
+        source_standard VARCHAR
         source_url VARCHAR
         version VARCHAR
     }
@@ -282,6 +295,15 @@ erDiagram
         cases_mean FLOAT
     }
 
+    FACT_ENVIRONMENTAL {
+        fact_env_id INT PK
+        location_code VARCHAR FK
+        date_id DATE FK
+        variable VARCHAR
+        value FLOAT
+        source_code VARCHAR FK
+    }
+
     %% Relationships
     DIM_LOCATION ||--o{ FACT_VECTOR_OBSERVATION : "has"
     DIM_LOCATION ||--o{ FACT_DISEASE_CASE : "has"
@@ -289,12 +311,14 @@ erDiagram
     DIM_LOCATION ||--o{ FACT_SOCIOECONOMIC_CONDITION : "measured at"
     DIM_LOCATION ||--o{ FACT_HEALTH_FACILITY : "located in"
     DIM_LOCATION ||--o{ FACT_DISEASE_BURDEN : "estimated for"
+    DIM_LOCATION ||--o{ FACT_ENVIRONMENTAL : "has"
 
     DIM_TIME ||--o{ FACT_VECTOR_OBSERVATION : "recorded at"
     DIM_TIME ||--o{ FACT_DISEASE_CASE : "onset on"
     DIM_TIME ||--o{ FACT_DISEASE_CASE : "reported on"
     DIM_TIME ||--o{ FACT_INTERVENTION : "start on"
     DIM_TIME ||--o{ FACT_INTERVENTION : "end on"
+    DIM_TIME ||--o{ FACT_ENVIRONMENTAL : "recorded at"
 
     DIM_DISEASE ||--o{ FACT_DISEASE_CASE : "diagnosed"
     DIM_DISEASE ||--o{ FACT_INTERVENTION : "targets"
@@ -314,6 +338,7 @@ erDiagram
     DIM_SOURCE ||--o{ FACT_SOCIOECONOMIC_CONDITION : "provides"
     DIM_SOURCE ||--o{ FACT_HEALTH_FACILITY : "provides"
     DIM_SOURCE ||--o{ FACT_DISEASE_BURDEN : "provides"
+    DIM_SOURCE ||--o{ FACT_ENVIRONMENTAL : "provides"
 
     FACT_VECTOR_OBSERVATION ||--o{ FACT_INSECTICIDE_RESISTANCE : "has"
     FACT_VECTOR_OBSERVATION ||--o{ FACT_BIONOMICS : "has"
@@ -343,30 +368,42 @@ erDiagram
 | | country_code | VARCHAR | ISO 3166‑1 alpha‑2 country code (e.g., 'GH', 'KE'). |
 | **DIM_DISEASE** | disease_code | VARCHAR | Primary key. Short code for the disease (e.g., 'MAL', 'DEN'). |
 | | disease_name | VARCHAR | Full disease name (e.g., 'Malaria', 'Dengue'). |
+| | description | VARCHAR | Optional description of the disease. |
+| | source_standard | VARCHAR | Reference to external standard (e.g., 'ICD-10:B54'). |
 | | pathogen | VARCHAR | Causal pathogen (e.g., 'Plasmodium falciparum', 'Dengue virus'). |
 | | icd_code | VARCHAR | ICD‑10 or ICD‑11 code for the disease. |
 | **DIM_VECTOR** | vector_code | VARCHAR | Primary key. Unique code for the vector (e.g., 'ANGAM', 'AEDAE'). |
 | | species_name | VARCHAR | Scientific species name (e.g., 'Anopheles gambiae', 'Aedes aegypti'). |
+| | description | VARCHAR | Optional description. |
+| | source_standard | VARCHAR | Reference to external standard (e.g., 'Darwin Core'). |
 | | subspecies | VARCHAR | Subspecies, if applicable (e.g., 'gambiae', 'aegypti'). |
 | | genus | VARCHAR | Genus name (e.g., 'Anopheles', 'Aedes'). |
 | | family | VARCHAR | Family name (e.g., 'Culicidae'). |
 | **DIM_INSECTICIDE** | insecticide_code | VARCHAR | Primary key. Short code for the insecticide (e.g., 'PYR', 'ORG'). |
 | | insecticide_name | VARCHAR | Full name (e.g., 'Pyrethroid', 'Organophosphate'). |
+| | description | VARCHAR | Optional description. |
+| | source_standard | VARCHAR | Reference (e.g., 'IRAC:3A'). |
 | | chemical_class | VARCHAR | Chemical class (e.g., 'Pyrethroid', 'Carbamate'). |
 | | irac_group | VARCHAR | IRAC group classification for mode of action. |
 | **DIM_IDENTIFICATION_METHOD** | method_code | VARCHAR | Primary key. Code for diagnostic method (e.g., 'PCR', 'RDT'). |
 | | method_name | VARCHAR | Full method name (e.g., 'Polymerase chain reaction', 'Rapid diagnostic test'). |
+| | description | VARCHAR | Optional description. |
+| | source_standard | VARCHAR | Reference (e.g., 'LOINC', 'WHO'). |
 | | method_type | VARCHAR | Broader category (e.g., 'molecular', 'serological', 'microscopy'). |
 | **DIM_RESISTANCE_TEST_TYPE** | test_type_code | VARCHAR | Primary key. Code for bioassay type (e.g., 'WHO', 'CDC'). |
 | | test_type_name | VARCHAR | Full name (e.g., 'WHO tube test', 'CDC bottle bioassay'). |
+| | description | VARCHAR | Optional description. |
+| | source_standard | VARCHAR | Reference (e.g., 'WHO', 'CDC'). |
 | | exposure_time_unit | VARCHAR | Unit of exposure time (e.g., 'minutes', 'hours'). |
 | **DIM_SOCIOECONOMIC_INDICATOR** | indicator_code | VARCHAR | Primary key. Code for indicator (e.g., 'ITN_USE', 'POVERTY'). |
 | | indicator_name | VARCHAR | Full name (e.g., 'Insecticide‑treated net use', 'Poverty rate'). |
+| | description | VARCHAR | Optional description. |
+| | source_standard | VARCHAR | Reference (e.g., 'UNICEF', 'World Bank'). |
 | | unit | VARCHAR | Measurement unit (e.g., '%', 'USD', 'count'). |
-| | source | VARCHAR | Organisation or dataset providing the indicator (e.g., 'UNICEF', 'World Bank'). |
 | **DIM_SOURCE** | source_code | VARCHAR | Primary key. Short code for the data source (e.g., 'GBIF', 'VA', 'WHO'). |
 | | source_name | VARCHAR | Full name of the source (e.g., 'Global Biodiversity Information Facility'). |
 | | source_description | VARCHAR | Brief description of the source. |
+| | source_standard | VARCHAR | Reference standard or organisation. |
 | | source_url | VARCHAR | URL to the source homepage or documentation. |
 | | version | VARCHAR | Version of the dataset (e.g., '2024-01', 'v2.1'). |
 | **FACT_VECTOR_OBSERVATION** | observation_id | INT | Primary key. Unique identifier for each vector surveillance record. |
@@ -407,9 +444,8 @@ erDiagram
 | **FACT_BIONOMICS** | bionomics_id | INT | Primary key. Unique identifier for bionomics record. |
 | | vector_observation_id | INT | Foreign key to `FACT_VECTOR_OBSERVATION`. Links to the vector sample. |
 | | source_code | VARCHAR | Foreign key to `DIM_SOURCE`. Originating data source. |
-| | biting_rate | FLOAT | Number of bites per person per unit time (e.g., per night). |
 | | feeding_preference | VARCHAR | Feeding preference ('anthropophagic', 'zoophagic', 'mixed'). |
-| | biting_location | VARCHAR | feeding location ('endophagic', 'exophagic', 'mixed'). |
+| | biting_location | VARCHAR | Location of host contact ('endophagic', 'exophagic', 'mixed'). |
 | | resting_behavior | VARCHAR | Where the vector rests after feeding (e.g., 'indoor', 'outdoor'). |
 | | larval_site_type | VARCHAR | Type of breeding site (e.g., 'puddle', 'container', 'rice field'). |
 | **FACT_INTERVENTION** | intervention_id | INT | Primary key. Unique identifier for each intervention campaign. |
@@ -444,7 +480,12 @@ erDiagram
 | | prevalence_rate | FLOAT | Proportion of population infected at a given time (0–1). |
 | | mortality_rate | FLOAT | Number of deaths per 1,000 population per year. |
 | | cases_mean | FLOAT | Mean estimated number of cases (absolute count). |
-
+| **FACT_ENVIRONMENTAL** | fact_env_id | INT | Primary key. Unique identifier for each environmental record. |
+| | location_code | VARCHAR | Foreign key to `DIM_LOCATION`. Area for which the variable is measured. |
+| | date_id | DATE | Foreign key to `DIM_TIME`. Date of measurement. |
+| | variable | VARCHAR | Name of the environmental variable (e.g., 'temperature_mean', 'rainfall_total'). |
+| | value | FLOAT | Measured value in standard units (e.g., °C, mm). |
+| | source_code | VARCHAR | Foreign key to `DIM_SOURCE`. Originating data source (e.g., 'ERA5'). |
 
 
 
