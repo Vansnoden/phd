@@ -8,7 +8,7 @@
 | Environmental Modeling & Assessment (Springer) | Publishes "quantitative modeling" of environmental problems. It is a solid choice in the environmental modeling space. | 22 days |
 
 
-### CDM Manuscript (manuscript 1) targeted journals
+### CDM Manuscript (manuscript 3) targeted journals
 
 | Journal | Why it is a great fit | Time to first decision |
 |:---|:---|:---|
