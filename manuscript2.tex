@@ -49,7 +49,7 @@
 \section*{abstract}
 \textbf{Background}: Vector-borne diseases (VBDs) remain a significant public health challenge in Africa, 
 exacerbated by severe data gaps in rapidly urbanizing regions. Traditional statistical models often lack 
-the granularity to capture the complex interplay between invasive vectors, such as Anopheles stephensi, 
+the granularity to capture the complex interplay between invasive vectors, such as \textit{Anopheles stephensi}, 
 and urban micro-climates. \textbf{Methods}: We present a novel, high-performance rule-based Multi-Agent 
 Simulation (MAS) framework designed to synthesize spatio-temporal vector dynamics. The architecture utilizes 
 a concurrent spatial registry with StampedLock optimization and an object-pooling lifecycle manager to ensure 
@@ -271,18 +271,18 @@ behaviors (e.g., mortality from extreme temperatures at priority 10) supersede l
 each priority level, rules are evaluated sequentially until a terminal action (e.g. "die") executes, at which point further rule evaluation 
 ceases for that agent during the current tick, optimizing computational resources.
 
-\subsection{Case Study Design: Anopheles stephensi in Dire Dawa, Ethiopia}
+\subsection{Case Study Design: \textit{Anopheles stephensi} in Dire Dawa, Ethiopia}
 \subsubsection{Study Area and Justification}
 \par 
 We selected Dire Dawa, Ethiopia (9.604°N, 41.856°E) as our validation case study due to several factors: (1) confirmed presence of invasive 
-Anopheles stephensi based on recent entomological surveys \citep{2020.MB.GDO,2021.MB.AUO,2022.AA.VCS}, (2) representative 
+\textit{Anopheles stephensi} based on recent entomological surveys \citep{2020.MB.GDO,2021.MB.AUO,2022.AA.VCS}, (2) representative 
 East African urban ecology with mixed formal/informal settlements, (3) available high-resolution environmental datasets, and (4) epidemiological 
-significance as an emerging malaria transmission zone. Anopheles stephensi presents particular modeling challenges due to its behavioral 
+significance as an emerging malaria transmission zone. \textit{Anopheles stephensi} presents particular modeling challenges due to its behavioral 
 plasticity; unlike most African malaria vectors, it thrives in urban environments by exploiting anthropogenic water containers for breeding 
 and exhibits both endophilic (indoor-resting) and exophilic (outdoor-resting) behaviors \citep{2020.MS.ANM}.
 \par
 The simulation domain encompassed a 5-kilometer radius circular buffer ($ \approx $ 78.5 $km^2$) centered on Dire Dawa's urban city/town. 
-This spatial extent captures the typical flight range of Anopheles stephensi (usually <1 km \citep{1966.MA.FRL}) while including peri-urban 
+This spatial extent captures the typical flight range of \textit{Anopheles stephensi} (usually <1 km \citep{1966.MA.FRL}) while including peri-urban 
 transition zones where breeding site availability changes dramatically. The buffer approach also accommodated spatial uncertainty in agent 
 initialization and prevented edge effects from influencing population dynamics.
 
@@ -295,18 +295,18 @@ footprint dataset, with density calculated using 100m grid cells to represent ur
 WorldPop's 100m resolution constrained-adjusted estimates for 2020, providing realistic human host availability.
 \par
 Historical climate data timeseries were derived from ERA5-Land reanalysis data at 0.1 degree spatial resolution and hourly temporal 
-resolution. We extracted a 4-month period (September-December 2025) encompassing the post-rainy season when Anopheles stephensi populations 
+resolution. We extracted a 4-month period (September-December 2025) encompassing the post-rainy season when \textit{Anopheles stephensi} populations 
 typically peak \citep{2023.AK.DAA}. The dataset included 2m temperature (K), total precipitation (m), and derived variables including 
 relative humidity and dew point temperature. These hourly values were temporally interpolated to 15-minute simulation ticks using the 
 InterpolatedRasterLayer class linear interpolation, capturing diurnal temperature fluctuations critical for mosquito physiology.
 \par
-Validation data comprised Anopheles stephensi occurrence records from the Global Biodiversity Information Facility (GBIF), filtered 
+Validation data comprised \textit{Anopheles stephensi} occurrence records from the Global Biodiversity Information Facility (GBIF), filtered 
 for quality (coordinate uncertainty $<$1 km) and temporal relevance. These presence-only records provided spatial benchmarks for comparing 
 simulated population distributions against empirical observations.
 
 \subsubsection{Simulation Parameters}
 \par 
-A 60-day simulation (September 1-October 30, 2025) was initialized with parameter values derived from published Anopheles stephensi 
+A 60-day simulation (September 1-October 30, 2025) was initialized with parameter values derived from published \textit{Anopheles stephensi} 
 ecology (Tables \ref{tab:agent_rules} \& \ref{tab:model_parameters}). Living agents were spatially distributed using a weighted 
 random placement algorithm favoring areas with: (1) building density $>$20\%, (2) population density $>$ 50 persons/$km^{2}$, 
 and (3) elevation between 1,000-1,500m. This produced an initial population of 500,000 mosquitoes with stage distribution: 60\% 
@@ -338,7 +338,7 @@ container types from small jars to large water tanks.
 
 \begin{table}[!htb]
 \centering
-\caption{Simulation Parameters for Anopheles stephensi}
+\caption{Simulation Parameters for \textit{Anopheles stephensi}}
 \label{tab:model_parameters}
 \begin{tabularx}{\textwidth}{@{}lllXl@{}}
 \toprule
@@ -364,12 +364,13 @@ location, (3) container status (water volume, egg/larval counts), and (4) system
 These CSV-formatted snapshots were stored in CSV (comma separated values) files and later merged into a single file for analysis and visualization.
 \par
 Post-simulation analysis focused on three validation metrics: (1) spatial correlation between simulated adult density and GBIF occurrence records 
-using Ripley's K-function, (2) temporal population trajectory comparison against published seasonal abundance curves for Anopheles stephensi, 
-and (3) container utilization rates compared to larval survey data from similar urban settings. Additionally, we performed sensitivity analysis 
-on key parameters (Table 2 uncertainty ranges) using Latin Hypercube sampling to identify drivers of population dynamics.
+using Ripley's K-function \citep{2022.KZ.RKF}, (2) temporal population trajectory comparison against published seasonal abundance curves for 
+\textit{Anopheles stephensi}, and (3) container utilization rates compared to larval survey data from similar urban settings. Additionally, 
+we performed sensitivity analysis on key parameters (Table 2 uncertainty ranges) using Latin Hypercube sampling \citep{1996.LW.OLH} to 
+identify drivers of population dynamics.
 \par
-The computational implementation achieved a sustained performance of approximately 2.5 simulation days per hour of compute time on a 16-core 
-workstation (AMD Ryzen 9 5950X, 64GB RAM), with memory usage stabilizing at 8-12GB after initialization. This performance envelope enables 
+The computational implementation achieved a sustained performance of approximately 2.5 simulation days per hour of compute time on a On a 2-core laptop 
+(Intel Core i5-6300U, 8GB RAM), with memory usage stabilizing at approximately 5.5GB after initialization. This performance envelope enables 
 multi-year simulations at urban scales, supporting both research applications and scenario testing for vector control interventions.
 
 
@@ -481,7 +482,7 @@ Total Runtime & 10.21 minutes \\ \bottomrule
 \section{Discussion}
 \par 
 The findings of this study demonstrate that a layered, rule-based Multi-Agent Simulation (MAS) provides a sophisticated 
-lens through which to view the invasion dynamics of Anopheles stephensi in urban African landscapes. By bridging 
+lens through which to view the invasion dynamics of \textit{Anopheles stephensi} in urban African landscapes. By bridging 
 high-resolution GIS data with autonomous agent logic, the framework moves beyond the limitations of traditional compartmental 
 models (e.g., SIR or SEIR), which typically assume uniform mixing and spatial homogeneity. In our simulation, the emergence of 
 localized "micro-habitats", where agents remained clustered around water tanks despite a regional temperature-driven population 
