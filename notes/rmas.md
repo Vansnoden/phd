@@ -15,3 +15,149 @@
 
 
 # Multi-agent systems
+
+The system alows you to overlay climantic and environmental variable
+as data layers.
+
+On top of this layers you can then overlay agent layers
+
+inert agent layers for agents who do not move during simualtion eventhough
+thier internal states can change.
+
+living agent layer, for agents who move accross landscape during the simulation. With living agent being able to interact with other agents
+(living / inert) as well as the environment.
+
+living agent ae intented to represent mosquitoes and follow a life cycle.
+
+Egg -> Larva -> Pupa -> Adult -> Egg
+
+The biology of the insect itself independently of any environmental
+condition allows transition between these conditions following the 
+following formulae found in [Agboka et al 2026](https://doi.org/10.1016/j.ecolmodel.2025.111386).
+
+
+## Matrix formulation and system dynamics ([Agboka et al 2026](https://doi.org/10.1016/j.ecolmodel.2025.111386))
+
+$ n(t) = \left [\begin{array}{c} E(t) \\ L(t) \\ P(t) \\ A(t) \end{array} \right]$
+
+where $E(t)$, $L(t)$, $P(t)$, and $A(t)$ represent the abundances of eggs, larvae, pupae, and adult insects, respectively, at time $t$.
+
+The population dynamics follow the linear differential equation:
+
+$ { dn \over dt } =  M(T, p_{blood} ) ∗ n(t)$
+
+where $M(T, p_{blood} )$ is a Metzler matrix, a continuous-time population
+projection matrix whose off-diagonal elements are non-negative and vary
+with temperature $T$ and host-seeking probabiliy $p_{blood}$ .
+
+Each entry in $M(T, p_{blood} )$ captures a stage-specific demographic
+rate: egg development, larval progression, pupal transition, adult sur­vival, or fecundity moderated by blood-meal availability. For instance,
+the top-right entry reflects adult fecundity scaled by $p_{blood}$ , while diag­onal entries represent negative rates like mortality. The Metzler struc­ture ensures biologically realistic transitions between life stages.
+
+Rather than projecting full stage abundances over time, we linearize
+the model around equilibrium and focus on the dominant eigenvalue of
+$M(T, p_{blood} )$, the eigenvalue with the largest real part (also called the spectral abscissa). This dominant eigenvalue directly
+represents the instantaneous intrinsic growth rate of the population,
+avoiding assumptions about stage distributions.
+
+The Metzler matrix is defined as:
+
+$M(T) = \left[ \begin{array}{cccc}  
+-d_{E}(T) & 0 & 0 & F(t).p_{blood} \\
+S_{E}(T).d_{E}(T) & -d_{L}(T) & 0 & 0 \\
+0 & S_{L}(T).d_{L}(T) & -d_{p}(T) & 0 \\
+0 & 0 & S_{p}(T).d_{p}(T) & -\mu_{A}(T)
+\end{array} \right]$
+
+Where:
+
+| Variable | Definition | Mathematical expression | Parameter values | Reference to data provenance |
+|:---|:---|:---|:---|:---|
+| $F(t)$ | Fecundity rate function (eggs per female per day) | $ae^{bT} - e^{bTmax - \left({Tmax - T} \over {c}\right)}$ | a = 0.378, b = 0.173, Tmax = 40.0, c = 2.97 | [Ivana Benkova et al 2007](https://doi.org/10.1093/jmedent/41.5.150) |
+| $d_E(T)$ | Development rate function for the egg stage | $max(0, − 0.0009 T^{2} + 0.048 T − 0.345)$ | Quadratic coefficients | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $d_L(T)$ | Development rate function for larval stage | $max(0, − 0.0007 T^{2} + 0.039 T − 0.32)$ | Quadratic coefficients | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $d_P(T)$ | Development rate function for the pupal stage | $max(0, − 0.0005T^{2} + 0.026T − 0.2)$ | Quadratic coefficients | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $S_E(T)$ | Survival rate function for eggs | $1.01exp\left( - 0.5 \left({T - 24.5} \over {4.8}\right)^2\right)$ | $\mu = 24.5, \sigma = 4.8$ | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $S_L(T)$ | Survival rate function for larvae | $0.95exp\left( - 0.5 \left({T - 27} \over {3.5}\right)^2\right)$ | $\mu = 27, \sigma = 3.5$ | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $S_P(T)$ | Survival rate function for pupae | $0.93exp\left( - 0.5 \left({T - 26.8} \over {3.8}\right)^2\right)$ | $\mu = 26.8, \sigma = 3.8$ | [Kasap OE et al 2005](https://europepmc.org/article/med/16599172) |
+| $\mu_A(T)$ | Mortality rate function for adults | $max(0, - 0.00065T^{2} + 0.0364T - 0.4882)$ | Quadratic coefficients | [Ivana Benkova et al 2007](https://doi.org/10.1093/jmedent/41.5.150) |
+
+
+
+The dominant eigenvalue is then calculated using: 
+
+$\lambda max = max\{Re(λ) : det(M − λI) = 0\}$
+
+The dominant eigenvalue λmax is the eigenvalue of the system matrix
+with the largest real part. An eigenvalue is a number that describes how
+a system changes when it follows its inherent growth or decay patterns
+(Stewart, 2001). In our context λmax represents the instantaneous
+intrinsic growth rate of the P. papatasi population: if it is greater than
+zero, the population tends to increase; if less than zero, the population
+declines; and if equal to zero, the population remains stable.
+To account for host carrying capacity K (host amplification effects in
+vector persistence), we scaled the matrix using a saturating function of
+livestock density (L):
+
+$K = 1 + log (1 + L)$
+
+Livestock provides a more reliable proxy for sustained host avail­ability than raw population density, as livestock presence generally in­dicates nearby humans. Applying a logarithmic transformation accounts for saturating host effects, preventing unrealistic suitability inflation in areas with very high livestock densities and reflecting known density-dependent vector ecology (Keesing et al., 2006; Kilpatrick et al., 2006). When scaled by the host carrying capacity K (reflecting blood meal availability) (Eq. (5)) λmax . K defines the environmental suitability index (SI). This index captures how temperature and host availability jointly influence the vector’s ability to persist and reproduce.
+
+$SI = λmax . K$
+
+
+
+### Code conversiont of the Metzler matrix model:
+
+### Specie's specification details
+
+##### Species Parameters in `simulation.yaml`
+
+The `species` section defines temperature‑dependent coefficients for the Metzler matrix life‑cycle model.  
+All temperatures in the equations are in **degrees Celsius**. The simulation automatically converts Kelvin (from climate data) to Celsius before applying these formulas.
+
+| Parameter | Description | Mathematical expression | Unit | Typical value (*An. stephensi*) |
+|-----------|-------------|------------------------|------|--------------------------------|
+| `fecundity_a` | Amplitude factor for fecundity | `F(T) = a · exp(b·T) – exp(b·Tmax – ((Tmax – T)/c)²)` | eggs·female⁻¹·day⁻¹ | 0.378 |
+| `fecundity_b` | Exponential coefficient for fecundity | – | °C⁻¹ | 0.173 |
+| `fecundity_Tmax` | Temperature where fecundity reaches zero | – | °C | 40.0 |
+| `fecundity_c` | Shape parameter for the descending limb | – | °C | 2.97 |
+| `egg_dev_a` | Quadratic coefficient for egg development rate | `dE(T) = max(0, a·T² + b·T + c)` | day⁻¹·°C⁻² | -0.0009 |
+| `egg_dev_b` | Linear coefficient for egg development rate | – | day⁻¹·°C⁻¹ | 0.048 |
+| `egg_dev_c` | Intercept for egg development rate | – | day⁻¹ | -0.345 |
+| `larva_dev_a` | Quadratic coefficient for larval development rate | same quadratic form | day⁻¹·°C⁻² | -0.0007 |
+| `larva_dev_b` | Linear coefficient for larval development rate | – | day⁻¹·°C⁻¹ | 0.039 |
+| `larva_dev_c` | Intercept for larval development rate | – | day⁻¹ | -0.32 |
+| `pupa_dev_a` | Quadratic coefficient for pupal development rate | same quadratic form | day⁻¹·°C⁻² | -0.0005 |
+| `pupa_dev_b` | Linear coefficient for pupal development rate | – | day⁻¹·°C⁻¹ | 0.026 |
+| `pupa_dev_c` | Intercept for pupal development rate | – | day⁻¹ | -0.2 |
+| `egg_survival_amp` | Maximum survival probability for eggs | `S_E(T) = amp · exp( –0.5 · ((T – μ)/σ)² )` | dimensionless | 1.01 |
+| `egg_survival_mean` | Optimal temperature for egg survival | μ | °C | 24.5 |
+| `egg_survival_sigma` | Temperature tolerance width for eggs | σ | °C | 4.8 |
+| `larva_survival_amp` | Maximum larval survival probability | same Gaussian form | dimensionless | 0.95 |
+| `larva_survival_mean` | Optimal temperature for larval survival | μ | °C | 27.0 |
+| `larva_survival_sigma` | Temperature tolerance width for larvae | σ | °C | 3.5 |
+| `pupa_survival_amp` | Maximum pupal survival probability | same Gaussian form | dimensionless | 0.93 |
+| `pupa_survival_mean` | Optimal temperature for pupal survival | μ | °C | 26.8 |
+| `pupa_survival_sigma` | Temperature tolerance width for pupae | σ | °C | 3.8 |
+| `adult_mort_a` | Quadratic coefficient for adult mortality rate | `μ_A(T) = max(0, a·T² + b·T + c)` | day⁻¹·°C⁻² | -0.00065 |
+| `adult_mort_b` | Linear coefficient for adult mortality rate | – | day⁻¹·°C⁻¹ | 0.0364 |
+| `adult_mort_c` | Intercept for adult mortality rate | – | day⁻¹ | -0.4882 |
+
+**Notes:**
+
+- Development rates (`dE`, `dL`, `dP`) are in **1/day**. The probability of completing a stage in one tick is `1 – exp(–rate · dt)`, where `dt` is the tick duration in days (e.g., 0.25/24 = 0.0104167 days for a 15‑minute tick).
+- Survival probabilities (`S_E`, `S_L`, `S_P`) are applied **once** when the stage is completed (i.e., a larva that finishes development survives with probability `S_L`).
+- Adult mortality is applied every tick as a daily rate converted to a per‑tick probability: `p_die = 1 – exp(–μ_A · dt)`.
+- Fecundity `F(T)` is in **eggs per female per day**. The actual number of eggs laid per tick is:
+
+
+
+
+
+
+
+
+
+
+
