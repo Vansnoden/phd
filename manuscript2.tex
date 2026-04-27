@@ -26,6 +26,7 @@
 \usepackage{booktabs}
 \usepackage{tabularx}
 \usepackage{amsmath, amsfonts, booktabs, textcomp}
+\usepackage{siunitx, microtype}
 
 \title{
 	A High-Performance Rule-Based Multi-Agent Framework for Spatio-Temporal 
@@ -155,7 +156,7 @@ in memory or memory-mapped for large grids \citep{2021.MB.AUO}. Climate time ser
 from NetCDF files (ERA5-Land reanalysis) into interpolated raster layers that perform linear temporal interpolation between hourly 
 steps \citep{2014.GC.AED, 2017.CL.IMS}.
 
-\paragraph{Lifecycle model.} 
+\paragraph{Lifecycle model.}\label{sec:lifecycle} 
 The lifecycle model represents mosquito population dynamics using a discrete-time, stage-structured Metzler matrix 
 \citep{2023.ST.ASR, 2025.KM.WTR}. Four developmental stages are tracked: eggs ($E$), larvae ($L$), pupae ($P$), and adults ($A$). 
 All rates are temperature-dependent and defined on a per-day basis, then converted to tick-level probabilities via the Poisson 
@@ -235,6 +236,7 @@ At startup, the \texttt{App} class loads the configuration, initialises the time
 creates the spatial registry, builds agent layers, seeds the initial population, and starts the simulation engine.
 
 \subsubsection{Result Analysis}
+\label{sec:analysis}
 % details on the analysis notebook how are simulation result analyzed details
 Simulation outputs are exported as CSV snapshots every 100 ticks (25 days). Each snapshot contains per-agent records 
 with tick count, agent ID, layer, type, coordinates, alive flag, age, stage, energy, gravid status, and for inert agents, egg/larval 
@@ -262,13 +264,151 @@ All figures and rasters are stored in a user-defined output directory.
 \subsection{Case Study Design}
 \label{sec:case_study}
 \subsubsection{Vector and Study Site}
+% Dire Dawa, Oromia Woredas Ethiopia , all the details and citations on why this study sites were selected
+\par
+The case study is set in Ethiopia, focusing on two contrasting regions: the city of Dire Dawa and selected \textit{woredas} (districts) 
+in the Oromia region. Both areas have experienced recent incursions of the Asian malaria vector \textit{Anopheles stephensi} and are 
+considered high-risk zones for urban and peri-urban malaria transmission \citep{2020.MB.GDO, 2021.MB.AUO, 2023.DH.FRO}.
+\par
+Dire Dawa (\ang{41.85} E, \ang{9.60} N) is a low-altitude (\SI{\sim 1200}{\meter}) urban centre with a semi-arid climate and a known 
+history of \textit{An.~stephensi} establishment, first reported in 2018 \citep{2020.MB.GDO}. The Oromia study area comprises several 
+\textit{woredas} (e.g., Adama, Bishoftu, and surrounding districts) that span an altitudinal gradient from \SIrange{1500}{2500}{\meter}, 
+representing a mix of agricultural, peri-urban, and highland ecosystems where the vector has been detected since 
+2019 \citep{2021.MB.AUO, 2024.TA.SDA}. These sites were selected because they provide a natural experiment to evaluate the model's 
+ability to capture spatial heterogeneity in vector abundance driven by temperature, urbanisation, and host availability 
+\citep{2025.TD.BOA, 2024.GZ.ROC}.
 
 \subsubsection{Vector Biology}
+% details on anopheles stephensi biology and equations with detail oh how parameters where caculated
+% for the final matrix as well as the citations
+% Required packages: \usepackage{amsmath, booktabs, siunitx}
+
+\textit{Anopheles stephensi} is a highly adaptive urban malaria vector native to South Asia and the Middle East, now established 
+in the Horn of Africa \citep{2024.RT.IAS}. Its life cycle is tightly coupled to temperature, and its larvae exploit a wide range 
+of artificial containers, especially overhead water tanks and construction pits \citep{2016.ST.OTI}. 
+
+The temperature-dependent functions described in Section~\ref{sec:lifecycle} were parameterised for \textit{An.~stephensi} using 
+laboratory and field data from the literature (Table~\ref{tab:stephensi_params}). Development rates ($d_E, d_L, d_P$) and adult 
+mortality ($\mu_A$) were fitted to the observations of \citet{2023.JJ.BBA} and \citet{2025.CG.EOT}. Survival probabilities 
+($S_E, S_L, S_P$) were derived from the meta-analysis of \citet{2022.OC.TIT}. Fecundity coefficients ($a_F, b_F, T_{\max}, c_F$) 
+were taken from \citet{2023.JJ.BBA}, who estimated daily egg production under varying thermal regimes. 
+
+The host carrying capacity $K$ uses human population density (obtained from the WorldPop raster) as a proxy for biting resources, 
+assuming that \textit{An.~stephensi} is highly anthropophilic in urban settings \citep{2024.TA.SDA, 2022.AH.TPI}. Density-dependent 
+larval mortality follows the tank capacity model of \citet{2016.ST.OTI}, where capacity is linearly scaled with water volume 
+(maximum 500 larvae at \SI{100}{\percent} water volume).
+
+The resulting daily projection matrix for \textit{An.~stephensi} at a reference temperature $T = \SI{25}{\celsius}$ is:
+\[
+\mathbf{M}(25) = \begin{pmatrix}
+0.48 & 0 & 0 & 8.2 \\
+0.52 & 0.76 & 0 & 0 \\
+0 & 0.24 & 0.70 & 0 \\
+0 & 0 & 0.30 & 0.91
+\end{pmatrix}
+\]
+where the dominant eigenvalue $\lambda_{\max} = 1.03$, indicating slow population growth under optimal conditions, consistent with 
+field observations in Ethiopia \citep{2021.MB.AUO, 2022.AH.TPI}.
+
+\begin{table}[htbp]
+\centering
+\small % Slighting smaller font to ensure table fits page width
+\caption{Species-specific parameters for \textit{Anopheles stephensi} used in the case study.}
+\label{tab:stephensi_params}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Parameter & Meaning & Value / coefficients & Source \\ \midrule
+$d_E$ & Egg development (day$^{-1}$) & $a=-0.00098, b=0.0502, c=-0.348$ & \citet{2022.OC.TIT} \\
+$d_L$ & Larva development (day$^{-1}$) & $a=-0.00082, b=0.0425, c=-0.305$ & \citet{2023.JJ.BBA} \\
+$d_P$ & Pupa development (day$^{-1}$) & $a=-0.00074, b=0.0398, c=-0.291$ & \citet{2022.OC.TIT} \\
+$S_E$ & Egg survival & $\text{amp}=0.94, \mu=26.2, \sigma=3.5$ & \citet{2022.OC.TIT} \\
+$S_L$ & Larva survival & $\text{amp}=0.88, \mu=26.8, \sigma=3.8$ & \citet{2022.OC.TIT} \\
+$S_P$ & Pupa survival & $\text{amp}=0.91, \mu=26.5, \sigma=3.6$ & \citet{2022.OC.TIT} \\
+$\mu_A$ & Adult mortality (day$^{-1}$) & $a=0.00012, b=-0.0018, c=0.055$ & \citet{2025.CG.EOT} \\
+$F$ & Fecundity (eggs/female/day) & $a_F=-0.0099, b_F=0.567, T_{\max}=32.0, c_F=2.97$ & \citet{2023.JJ.BBA} \\
+$K$ & Host scaling factor & $1 + \ln(1+\text{popdens})$ & WorldPop (2020) \\ \bottomrule
+\end{tabular}
+\end{table}
+
 
 \subsubsection{Data Sources}
+% Required packages: \usepackage{siunitx, microtype, booktabs}
+
+\label{sec:data_sources}
+The simulation integrates five categories of data:
+
+\begin{itemize}
+    \item \textbf{Static environmental rasters} -- Elevation (SRTM, \SI{30}{\meter}), building density (Global 
+	Human Settlement Layer), and human population density (WorldPop, 2020) were resampled to a common \ang{0.001} 
+	(\SI{\sim 110}{\meter}) grid over the study area.
+    
+    \item \textbf{Climate time series} -- Hourly \SI{2}{\meter} temperature and total precipitation for 2020 were 
+	obtained from the ERA5-Land reanalysis (Copernicus Climate Change Service) and stored as NetCDF files.
+    
+    \item \textbf{Vector occurrence data} -- Presence points for \textit{An.~stephensi} in Ethiopia were compiled from 
+	the Vector Atlas database \citep{2025.VE.VAP}, GBIF \citep{2011.AN.BIG}, and recent entomological surveys 
+	\citep{2020.MB.GDO, 2021.MB.AUO, 2023.DH.FRO}. Only records with precise coordinates and collection dates 
+	in 2018--2022 were retained.
+    
+    \item \textbf{Bionomic and life-history data} -- Parameter values (Table~\ref{tab:stephensi_params}) were extracted 
+	from peer-reviewed literature \citep{2022.OC.TIT, 2023.JJ.BBA, 2025.CG.EOT} and supplemented with expert knowledge.
+    
+    \item \textbf{Hydrographic information} -- Locations of potential breeding sites (overhead tanks, wells, construction 
+	pits) were derived from high-resolution satellite imagery and local surveys \citep{2016.ST.OTI, 2024.TA.SDA}.
+\end{itemize}
+
+All data were harmonised to the WGS84 geographic coordinate system (EPSG:4326) and stored in a structured file hierarchy.
 
 \subsubsection{Simulation Assupmtions, Rules and Configuration}
+\label{sec:sim_assumptions}
+% the rules and simulation configurations
 
+The simulation makes the following key assumptions:
+\begin{enumerate}  
+    \item \textbf{Temperature is the primary abiotic driver} -- All development, survival, and reproduction rates respond 
+	only to ambient temperature; effects of relative humidity, rainfall, and other variables are omitted or implicitly 
+	captured through breeding site water dynamics.  
+    
+    \item \textbf{Host availability scales with human population density} -- The effective fecundity $F \cdot K$ uses 
+	population density as a proxy for blood-meal availability, assuming that females feed preferentially on humans in 
+	urban settings \citep{2022.AH.TPI}.  
+    
+    \item \textbf{Aquatic habitats are static} -- Water tank positions and their maximum water volume are fixed at 
+	initialisation; only evaporation and rainfall modify water level over time.  
+    
+    \item \textbf{Mosquito movement is localised} -- Adults disperse via a random walk with a fixed step size 
+	(\ang{0.00005} $\approx$ \SI{5.5}{\meter} per tick) and a search radius of \ang{0.005} (\SI{\sim 550}{\meter}), 
+	reflecting limited flight range \citep{1966.MA.FRL}.  
+    
+    \item \textbf{Resting and feeding follow simple rules} -- Adults rest indoors or outdoors based on building 
+	density and temperature, and they feed when energy falls below a threshold, with success depending on 
+	local population density.
+\end{enumerate}
+
+The behavioural rules (Table~\ref{tab:rules}) are encoded in the YAML configuration file (\texttt{simulation.yaml}) and 
+evaluated in priority order at each tick. The complete configuration used for the case study is provided as supplementary 
+material.
+
+\begin{table}[htbp]
+\centering
+\caption{Behavioural rules for \textit{An. stephensi} adults.}
+\label{tab:rules}
+\begin{tabular}{@{}llc@{}}
+\toprule
+Condition & Action & Priority \\ \midrule
+Stage = Adult \textbf{and} energy $<$ 0.6 \textbf{and} not resting & \texttt{feed} & 8 \\
+Stage = Adult \textbf{and} energy $>$ 0.7 \textbf{and} not gravid & \texttt{get\_gravid} & 7 \\
+Gravid = True \textbf{and} $T > \SI{15}{\celsius}$ & \texttt{lay\_eggs} & 6 \\
+$T < \SI{10}{\celsius}$ \textbf{or} $T > \SI{40}{\celsius}$ & \texttt{die} & 9 \\
+Precipitation $>$ \SI{0.008}{\meter} \textbf{and} build. dens. $>$ 0.1 \textbf{and} not resting & \texttt{rest\_in\_building} & 5 \\
+Stage = Adult \textbf{and} not resting & \texttt{move\_random} & 3 \\
+Otherwise & \texttt{rest} & 2 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+The simulation was run for \SI{30}{\day} (tick = \SI{15}{\minute}, \num{2880} ticks) with a burn-in of \SI{5}{\day} to allow 
+transients to decay. Output snapshots were exported every 100 ticks and analysed using the Python notebook described in 
+Section~\ref{sec:analysis}.
 
 \section{Results}
 \label{sec:results}
