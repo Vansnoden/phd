@@ -400,12 +400,203 @@ The simulation was run for \SI{30}{\day} (tick = \SI{15}{\minute}, \num{2880} ti
 transients to decay. Output snapshots were exported every 100 ticks and analysed using the Python notebook described in 
 Section~\ref{sec:analysis}.
 
+% Required packages: \usepackage{siunitx, graphicx, booktabs, amsmath}
+
 \section{Results}
 \label{sec:results}
 
+The simulation was executed for a duration of six months (\SI{180}{\day}, comprising \num{17280} ticks of \SI{15}{\minute} each) 
+over the contrasting study areas of Dire Dawa and selected Oromia \textit{woredas} in Ethiopia. The model utilised the 
+temperature-dependent lifecycle parameters specifically fitted for \textit{Anopheles stephensi}. Output snapshots were processed 
+to evaluate population stability, environmental response, and spatial suitability.
+
+The mosquito population reached a near-steady state after approximately \SI{10}{\day} of simulation. Across both sites, adult 
+abundance stabilised at approximately \num{85000} individuals, while larval and pupal counts fluctuated around \num{35000} and \num{21000}, 
+respectively (Figure~\ref{fig:population_dynamics}). Analysis of the six-month time series revealed that the daily adult count maintained 
+a weak negative correlation with temperature (Pearson's $r = -0.119$, $p = 0.12$) and negligible correlation with precipitation 
+($r = 0.009$, $p = 0.91$). These results suggest that under the simulated conditions, intrinsic density-dependent regulation and the 
+availability of stable aquatic habitats (water tanks) dominated over short-term climatic fluctuations.
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/mosquito_dynamics.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/mosquito_dynamics.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Daily counts of adult, larval, and pupal \textit{An. stephensi} over the six-month simulation. Population levels show
+	  high stability following the initial 10-day burn-in period.}
+     \label{fig:population_dynamics}
+\end{figure}
+
+Theoretical stage durations were calculated based on the mean observed temperature (\SI{19.9}{\celsius}), yielding \SI{5.6}{\day} 
+for larvae and \SI{8.4}{\day} for pupae. The dominant eigenvalue ($\lambda_{\max}$) of the Metzler projection matrix, averaged over 
+the full simulation period, was \num{1.003}. This value indicates a slowly growing population near equilibrium, which is consistent 
+with the established status of \textit{An.~stephensi} in urban Ethiopia \citep{2021.MB.AUO}. Figure~\ref{fig:growth} illustrates the 
+moderate agreement between the observed daily adult growth factor and the predicted $\lambda_{\max}$.
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/growth_validation.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/growth_validation.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Observed daily adult growth factor versus predicted $\lambda_{\max}$ (red dashed line). The average predicted 
+	 growth factor ($\lambda_{\max} = 1.003$) aligns with the observed stability.}
+     \label{fig:growth}
+\end{figure}
+
+A total of \num{1336} water tanks were simulated. Mean water volume remained highly stable at $\SI{85.3 \pm 0.02}{\percent}$, 
+as evaporation losses were balanced by periodic precipitation events (Figure~\ref{fig:tank_stats}). The reciprocal trend 
+observed between egg and larval counts per tank confirms active hatching and stage transition within these permanent aquatic 
+habitats.
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/tank_stats.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/tank_stats.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Water tank statistics: (top) mean water volume; (middle) mean eggs per tank; (bottom) mean larvae per tank.}
+     \label{fig:tank_stats}
+\end{figure}
+
+Daily average temperatures ranged between \SIrange{19.5}{20.1}{\celsius}, while precipitation remained relatively constant 
+at \SI{\sim 1590}{\milli\meter\per\day} (Figure~\ref{fig:environment}). The low variability in these drivers over the 
+six-month period explains the dominance of endogenous population processes over climatic forcing in this specific case study.
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/environment.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/environment.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Daily average environmental conditions (Temperature in red, Precipitation in blue) throughout the simulation.}
+     \label{fig:environment}
+\end{figure}
+
+Spatial suitability maps were generated using Kernel Density Estimation (KDE) with a bandwidth of \ang{0.002} 
+(\SI{\sim 220}{\meter}). As shown in Figure~\ref{fig:adult_suitability}, adult mosquito density was highest in urban 
+cores and areas with significant building density. Validation against independent occurrence points yielded a 
+continuous Boyce index of \num{0.633}, confirming the model's moderate predictive power for invasive vector establishment. 
+The final breeding site potential, derived from the distribution of eggs and larvae in water tanks, is presented in 
+Figure~\ref{fig:breeding_potential}.
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/adult_suitability.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/adult_suitability.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Adult mosquito suitability maps (KDE) overlaid with occurrence records (red dots). High density 
+	 correlates with urban infrastructure.}
+     \label{fig:adult_suitability}
+\end{figure}
+
+\begin{figure}[htbp]
+     \centering
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/dire_dawa/breeding_site_potential.png}
+         \caption{Dire Dawa}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.49\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{figs/oromia/breeding_site_potential.png}
+         \caption{Oromia}
+     \end{subfigure}
+     \caption{Breeding site potential rasterized from final egg and larval counts in water tanks.}
+     \label{fig:breeding_potential}
+\end{figure}
+
+
+% Required packages: \usepackage{siunitx, amsmath}
 
 \section{Discussion}
 \label{sec:discussion}
+\par
+The simulation results demonstrate that the agent-based model successfully reproduces a near-equilibrium population of 
+\textit{Anopheles stephensi} in the two contrasting Ethiopian settings of Dire Dawa and the Oromia \textit{woredas}. 
+The observed adult abundance (\SI{\sim 85000} individuals), larval and pupal counts, and the dominant eigenvalue 
+($\lambda_{\max} = 1.003$) indicate a slowly growing but stable population. This is consistent with field reports 
+suggesting that \textit{An.~stephensi} has become established in urban Ethiopia without triggering explosive outbreaks 
+\citep{2021.MB.AUO, 2022.AH.TPI}. Furthermore, the theoretical stage durations (\SI{5.6}{\day} for larvae and \SI{8.4}{\day} 
+for pupae at \SI{19.9}{\celsius}) fall within the ranges reported in laboratory studies \citep{2023.JJ.BBA}, supporting the 
+validity of the temperature-dependent parameterisation.
+\par
+A key finding of this study is the weak correlation between adult abundance and short-term temperature or precipitation 
+fluctuations. Under the relatively stable climatic conditions of the six-month simulation (temperature range 
+\SIrange{19.5}{20.1}{\celsius}), endogenous density-dependent processes and the availability of permanent larval 
+habitats (water tanks) appear to outweigh environmental forcing. This aligns with observations that \textit{An.~stephensi} 
+thrives in human-made containers that buffer the population against rainfall variability \citep{2016.ST.OTI, 2024.TA.SDA}. 
+However, the model may underestimate the influence of extreme weather events or seasonal drying, which were not prominent in 
+the 2020 climate data utilized. Future work should incorporate inter-annual climate variability to test population resilience 
+against prolonged drought periods.
+\par
+The water tank statistics revealed a stable mean water volume (\SI{85.3}{\percent}) and a reciprocal pattern between egg and 
+larval counts, confirming that hatching and density-dependent mortality are correctly simulated within the agent-based framework. 
+The tank capacity model, which caps larval numbers as a linear function of water volume, effectively prevented unbounded growth 
+and mimicked the resource competition observed in field surveys \citep{2016.ST.OTI}. Nevertheless, the assumption of static tank 
+positions and fixed maximum volumes may oversimplify real-world dynamics, where water usage, cleaning, and replenishment vary 
+seasonally. Integrating a stochastic turnover or "aging" of breeding sites could improve the model's structural realism.
+\par
+The spatial suitability maps generated via KDE highlight urban cores and high-building-density areas as the most suitable 
+habitats for both adults and larvae. This pattern corroborates the known urban adaptation of \textit{An.~stephensi} and its 
+preference for artificial containers \citep{2024.RT.IAS, 2022.EJ.ASA}. The continuous Boyce index of \num{0.633} indicates 
+moderate predictive performance, which is acceptable for a presence-only model of a recently invasive species where occurrence 
+data are sparse. The relatively low proportion of independent points (\SI{14.3}{\percent}) falling into the top \SI{20}{\percent} 
+of the suitability map is likely a consequence of the small sample size remaining after spatial clipping ($n=14$). Increasing the 
+collection of geo-referenced occurrence records across different urban gradients would enable a more robust validation in 
+future iterations.
+\par
+Several limitations should be acknowledged. First, the model currently omits other biophysical drivers such as relative 
+humidity and wind speed, which may affect adult desiccation and dispersal behaviour \citep{2024.EA.IAC, 2025.CG.EOT}. Second, 
+the movement rule (random walk with a fixed step size) does not yet capture complex host-seeking behaviour; incorporating a 
+biased random walk toward resource gradients could increase spatial accuracy. Finally, while human population density is a 
+strong proxy for biting resources in urban settings, \textit{An.~stephensi} is known to exhibit plastic feeding behaviour 
+including zoophily \citep{2016.ST.OTI}. A multi-host formulation might improve fecundity estimates in peri-urban or mixed 
+land-use areas.
+\par
+Despite these limitations, the model provides a valuable tool for exploring the invasion dynamics of \textit{An.~stephensi} 
+and for designing targeted vector control interventions. The generic, YAML-driven parameterisation allows for rapid adaptation 
+to other mosquito species or geographic regions. Future research should extend the simulation to multi-year runs to evaluate 
+the long-term impact of larval source management, such as the systematic covering of water tanks or targeted larviciding, on 
+population suppression in urban centres.
 
 
 \section{Conclusion}
