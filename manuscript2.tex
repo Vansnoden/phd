@@ -2,6 +2,7 @@
 \usepackage{blindtext}
 \usepackage{geometry}
 \usepackage{graphicx}
+\usepackage[utf8]{inputenc}
 \graphicspath{{./figs/}}
 \usepackage{multirow, multicol, longtable}
 \usepackage{url}
@@ -35,12 +36,14 @@
 \author[1,2]{Salvador D. Atagong}
 \author[1]{Komi Mensah Agboka}
 \author[1]{Kennedy Senagi}
+\author[4]{Mark Wamalwa}
 \author[2,3]{Henri Tonnang}
 \author[2]{John Odindi}
 
 \affil[1]{International Center of Insect Physiology and Ecology (ICIPE)}
 \affil[2]{University of KwaZulu-Natal, South Africa}
 \affil[3]{International Institute of Tropical Agriculture (IITA), Ibadan, Nigeria}
+\affil[4]{University of Nairobi, Kenya}
 \date{}
 
 \begin{document}
@@ -56,8 +59,9 @@ The model was parameterised for \textit{An. stephensi} and run for six months ov
 data. Urban cores showed highest suitability (Continuous Boyce Index up to $0.633$). Adult abundance correlated weakly with 
 temperature ($r=-0.12$, $p=0.12$) but significantly with precipitation in Dire Dawa ($r=-0.72$, $p<0.001$).  
 \textbf{Conclusion:} The framework reproduces known \textit{An. stephensi} ecology and identifies urban hotspots. Its 
-YAML-driven parameterisation makes it adaptable to other species and regions, supporting evidence-based vector control in 
-data-limited settings.
+YAML-driven (YAML is a human-readable, lightweight data serialization language used primarily for configuration files, 
+data exchange, and DevOps tools like Kubernetes and Ansible) parameterisation makes it adaptable to other species and regions, 
+supporting evidence-based vector control in data-limited settings.
 
 \paragraph{Keywords:} multi-agent systems, vector-borne disease, 
 \textit{Anopheles stephensi}, Metzler matrix, high-performance computing, spatial ecology.
@@ -72,7 +76,7 @@ Malaria alone threatens nearly half the world's population, with Sub-Saharan Afr
 as \citep{2024.WH.WWM}. While the past two decades witnessed substantial reductions in malaria mortality through coordinated 
 interventions, this hard-won progress faces unprecedented threats from ecological and demographic shifts. 
 The rapid urbanization of Sub-Saharan Africa, currently the world's fastest urbanizing region \citep{2019.IS.UAI}, 
-has created novel transmission ecologies that challenge historical assumptions about vector ecology and control 
+has created novel transmission ecologies that challenges historical assumptions about vector ecology and control 
 strategies \citep{2024.NK.MBD}.
 \par
 The primary driver of this epidemiological transition is the globalization of previously localized vectors, particularly 
@@ -80,7 +84,7 @@ the invasive malaria mosquito \textit{Anopheles stephensi}. Unlike endemic Afric
 breed in natural water bodies, \textit{An. stephensi} exhibits remarkable ecological plasticity, thriving in artificial 
 containers and man-made structures characteristic of urban environments \citep{2025.GC.SAB}. This species shares critical 
 adaptive traits with \textit{Aedes aegypti}, the primary dengue vector, including container breeding, anthropophily, and 
-exophilic resting behaviors \citep{2022.AH.TPI}. The consequences of this adaptation were discored in Djibouti, 
+exophilic resting behaviors \citep{2022.AH.TPI}. The consequences of this adaptation were first recorded in Djibouti, 
 where\textit{ An. stephensi} establishment triggered a 30-fold increase in malaria cases within seven years, transforming a 
 nation on the verge of malaria elimination into a high-transmission zone \citep{2022.AH.TPI}. This vector's capacity to exploit 
 previously low-risk urban settings necessitates fundamentally new approaches to surveillance, modeling, and 
@@ -96,14 +100,14 @@ deployment \citep{2025.RL.HMD}. This disconnect is particularly acute for invasi
 baseline data undermines traditional statistical approaches \citep{2019.EL.ALO}.
 \par
 To address these challenges, we propose a novel computational framework that integrates high-performance computing methodologies 
-with ecological process modeling. Our system implements a layered, rule-based Multi-Agent Simulation (MAS) architecture that 
+with ecological process modeling. Our system implements a layered and modular, rule-based Multi-Agent Simulation (MAS) architecture that 
 harmonizes heterogeneous spatio-temporal data streams into a unified analytical environment. This framework is part of the 
 family of ABS (Agent Based Simulation) which are simulation models where the researcher explicitly describe the decision 
 processes of simulated actors at micro-level \citep{2008.PE.ITM}. The proposed framework bridges Computer Science and 
 Environmental Science by conceptualizing environmental data as dynamic information layers, including static rasters (for instance: 
 elevation, building density, population density), time-series climate variables, and vector data (shapefiles), that interact with 
 autonomous agent populations. We distinguish between two agent classes: "Inert Agents" representing static environmental features 
-(urban water containers serving as breeding sites) and "Living Agents" modeling biological vectors (An. stephensi mosquitoes for 
+(urban water containers serving as breeding sites) and "Living Agents" modeling biological vectors (\textit{An. stephensi} mosquitoes for 
 example) with behavioral rules derived from empirical studies.
 \par
 This study demonstrates how such synthetic modeling approaches can provide critical insights where field data are scarce or 
@@ -126,14 +130,14 @@ temperature-dependent life-cycle models, and behavioural rules. It is implemente
 subsystems: (i) a time manager that advances simulation time in discrete ticks (15-minutes per tick) and interpolates 
 climate data; (ii) a spatial registry that indexes agents on a lazy grid for efficient neighbourhood queries; 
 (iii) an agent layer system that manages agents and evaluates rules in parallel; and (iv) a lifecycle model that computes 
-temperature-driven development and survival rates. The overall architecture is illustrated in Figure~\ref{fig:arch}.
-\begin{figure}[htbp]
+temperature-driven development and survival rates. The overall architecture is illustrated in Figure \ref{fig:arch}.
+\begin{figure}[!htb]
 \centering
 \includegraphics[width=\textwidth]{figs/phd_graphs-rmas.drawio.png}
 \caption{High-level architecture of the simulation framework. The diagram is organised into three layers: 
-\textbf{Data Layer} (input data sources), \textbf{Core Engine Layer} (simulation components), and \textbf{Analysis 
-\& Visualization Layer} (post-processing and validation). Solid arrows ($\rightarrow$) denote \textit{data flow} 
-(e.g., configuration files, rasters, climate NetCDF, and simulation outputs). Dashed arrows ($\rightarrow$) denote 
+\textit{Data Layer} (input data sources), \textit{Core Engine Layer} (simulation components), and \textit{Analysis 
+\& Visualization Layer} (post-processing and validation). Solid arrows denote \textit{data flow} 
+(e.g., configuration files, rasters, climate NetCDF, and simulation outputs). Dashed arrows denote 
 \textit{control flow} (e.g., tick scheduling, spatial queries, rule evaluation, and lifecycle updates). The analysis 
 layer reads CSV snapshots generated by the persistence service and produces daily summaries, suitability maps, 
 validation metrics, and final figures.}
@@ -144,33 +148,31 @@ validation metrics, and final figures.}
 \label{sec:core_components}
 
 \subsubsection{Agent layers}
-Two agent types are implemented: \texttt{LivingAgent} (representing a mosquito) and \texttt{InertAgent} (representing 
-a breeding site). Living agents track:
-\begin{itemize}
-  \item life stage (egg, larva, pupa, adult),
-  \item age, energy, gravid status, and resting behaviour.
-\end{itemize}
-Their movement is modelled as a random walk with a step size derived from field observations of flight range 
-\citep{1966.MA.FRL}. Inert agents maintain water volume, egg count, larval count, and carrying capacity; they update 
-their capacity dynamically based on water level, mimicking density-dependent mortality observed in larval habitats 
-\citep{2016.ST.OTI}. Agent layers are processed in parallel using a partition-based container (\texttt{AgentContainer}) 
-and a rule engine that evaluates behavioural rules (e.g., feeding, oviposition, resting) in priority order \citep{2023.ST.ASR}.
+Two agent types are implemented: \texttt{LivingAgent} (representing a mosquito) and \texttt{InertAgent} (representing a 
+breeding site). Living agents track life stage (egg, larva, pupa, adult), age, energy, gravid status, and resting behaviour.
+Their movement is modelled as a random walk with a step size derived from field observations of flight range \citep{1966.MA.FRL}. 
+Inert agents maintain water volume, egg count, larval count, and carrying capacity; they update their capacity dynamically based on 
+water level, mimicking density-dependent mortality observed in larval habitats \citep{2016.ST.OTI}. Agent layers are processed in 
+parallel using a partition-based container (\texttt{AgentContainer}) and a rule engine that evaluates behavioural rules (e.g., 
+feeding, oviposition, resting) in priority order \citep{2023.ST.ASR}.
 
 \subsubsection{Raster layers and climate data}
-Static raster layers (elevation, building density, population density) are loaded from GeoTIFF files using GeoTools and 
-stored either in memory or memory-mapped for large grids \citep{2021.MB.AUO}. Climate time series (2-m temperature and 
-total precipitation) are ingested from NetCDF files (ERA5-Land reanalysis) into interpolated raster layers that perform linear 
-temporal interpolation between hourly steps \citep{2014.GC.AED, 2017.CL.IMS}.
+Static raster layers (elevation, building density, population density) are loaded from GeoTIFF files using GeoTools and stored either 
+in memory or memory-mapped for large grids. Climate time series (2-m temperature and total precipitation) are 
+ingested from NetCDF files (ERA5-Land reanalysis) into interpolated raster layers that perform linear temporal interpolation between 
+hourly steps \citep{2014.GC.AED, 2017.CL.IMS}.
 
 \subsubsection{Lifecycle model}
 \label{sec:lifecycle}
 The lifecycle model represents mosquito population dynamics using a discrete-time, stage-structured Metzler matrix 
 \citep{2023.ST.ASR,2025.KM.WTR}. Four developmental stages are tracked: eggs ($E$), larvae ($L$), pupae ($P$), and adults ($A$). 
-All rates are temperature-dependent and defined on a per-day basis, then converted to tick-level probabilities via the Poisson process:
+All rates are temperature-dependent and defined on a per-day basis, then converted to tick-level probabilities via the Poisson 
+process:
 \[
 p = 1 - \exp(-r \Delta t),
 \]
-where $\Delta t$ is the tick duration in days ($\Delta t = 0.25$ h $= 0.01042$ days). The daily projection matrix is:
+where $\Delta t$ is the tick duration in days ($\Delta t = 0.25$ h $= 0.01042$ days). 
+The daily projection matrix is:
 \[
 \mathbf{M}(T) = 
 \begin{pmatrix}
@@ -191,14 +193,40 @@ with stage abundances evolving as $[E,L,P,A]_{t+1}^\top = \mathbf{M}(T) [E,L,P,A
   \item \textbf{Density-dependent larval mortality}: each aquatic habitat has a carrying capacity $\text{cap}$ (linearly scaled with water 
   volume); if larval count exceeds $\text{cap}$, excess larvae are removed probabilistically.
 \end{itemize}
-All temperature-response coefficients are stored in a YAML configuration file under the \texttt{species} key, making the model generic and 
-easily adaptable to any mosquito species by replacing the coefficients in Table~\ref{tab:lifecycle_params}. This parametrisation follows 
-the principles of generic insect population modelling \citep{2025.KM.DPF,2025.KM.WTR,2026.KM.THM}.
+All temperature-response coefficients are stored in a YAML configuration file under the \texttt{species} key, making the model generic 
+and easily adaptable to any mosquito species by replacing the coefficients in Table \ref{tab:lifecycle_params}. This parametrisation 
+follows the principles of generic insect population modelling \citep{2025.KM.DPF,2025.KM.WTR,2026.KM.THM}.
+
+\begin{table}[!htb]
+\centering
+\caption{Generic temperature-response parameters for a mosquito lifecycle model.}
+\label{tab:lifecycle_params}
+\begin{tabular}{llll}
+\toprule
+Parameter set & Meaning & Unit & YAML key \\ \midrule
+$d_E$ coeff. & Egg development rate & $1/^\circ\text{C}^2, 1/^\circ\text{C}, 1$ & \texttt{egg\_dev\_a,b,c} \\
+$d_L$ coeff. & Larva development rate & $1/^\circ\text{C}^2, 1/^\circ\text{C}, 1$ & \texttt{larva\_dev\_a,b,c} \\
+$d_P$ coeff. & Pupa development rate & $1/^\circ\text{C}^2, 1/^\circ\text{C}, 1$ & \texttt{pupa\_dev\_a,b,c} \\
+$S_E$ & Egg survival (amp, mean, sigma) & dim., $^\circ\text{C}, ^\circ\text{C}$ & \texttt{egg\_survival\_...} \\
+$S_L$ & Larva survival (amp, mean, sigma) & dim., $^\circ\text{C}, ^\circ\text{C}$ & \texttt{larva\_survival\_...} \\
+$S_P$ & Pupa survival (amp, mean, sigma) & dim., $^\circ\text{C}, ^\circ\text{C}$ & \texttt{pupa\_survival\_...} \\
+$\mu_A$ coeff. & Adult mortality & $1/^\circ\text{C}^2, 1/^\circ\text{C}, 1$ & \texttt{adult\_mort\_a,b,c} \\
+$F$ coeff. & Fecundity & $a_F, b_F, T_{\max}, c_F$ & \texttt{fecundity\_a,b,Tmax,c} \\
+$K$ & Host scaling factor & dimensionless & (derived) \\ \bottomrule
+\multicolumn{4}{p{0.9\linewidth}}
+{\footnotesize \textit{Note:} 
+"coeff." denotes the three coefficients $(a,b,c)$ of the quadratic function. 
+"1" indicates dimensionless (unit 1). 
+"dim." stands for dimensionless. 
+For survival parameters, "amp" is dimensionless, "mean" and "sigma" are in \si{\celsius}.
+} \\
+\end{tabular}
+\end{table}
 
 \subsubsection{Rule engine and spatial registry}
-Behavioural rules (e.g., “\texttt{feed}”, “\texttt{lay\_eggs}”, “\texttt{rest\_in\_building}”) are defined in a YAML configuration file 
-and evaluated using a JavaScript engine (GraalVM). The spatial registry implements a lazy grid with a configurable cell size 
-(default $0.001^\circ \approx 110$ m). Neighbour queries are performed by checking cells within a Chebyshev distance 
+Behavioural rules (e.g., "\texttt{feed}", "\texttt{lay\_eggs}", "\texttt{rest\_in\_building}") are defined in a YAML configuration 
+file and evaluated using a JavaScript engine (GraalVM \citep{2023.VT.CPA}). The spatial registry implements a lazy grid with a configurable cell size 
+(default $0.001^\circ \approx 110$ m). Neighbour queries are performed by checking cells within a Chebyshev distance 
 $\lceil \text{radius}/\text{cellSize}\rceil$; results are cached for one second per cell to reduce computational cost.
 
 \subsubsection{Simulation Configuration}
@@ -210,36 +238,36 @@ All simulation parameters are defined in a single YAML file (\texttt{simulation.
   \item \textbf{Time settings}: start date, total number of ticks, tick duration (15-minutes).  
   \item \textbf{File paths}: study area shapefile, elevation, building density, population rasters, and the climate NetCDF.  
   \item \textbf{Species parameters}: coefficients for development, survival, fecundity, and adult mortality.  
-  \item \textbf{Tokens}: mapping between environment variable names (e.g., “temperature”) and raster layers.  
+  \item \textbf{Tokens}: mapping between environment variable names (e.g., "temperature") and raster layers.  
   \item \textbf{Agent layers and rules}: each layer contains a list of rules with a condition, an action, and a priority.  
   \item \textbf{Seeding}: number of breeding sites and mosquitoes, habitat grid resolution, and whether to seed uniformly or 
   using a weighted habitat suitability map.  
   \item \textbf{Project defaults}: agent search radius, step size, maximum age.
 \end{itemize}
 \par
-At startup, the \texttt{App} class loads the configuration, initialises the time manager, loads rasters and climate data, 
+At startup, the simulator loads the configuration, initialises the time manager, loads rasters and climate data, 
 creates the spatial registry, builds agent layers, seeds the initial population, and starts the simulation engine.
 
 \subsubsection{Result Analysis}
 \label{sec:analysis}
 % details on the analysis notebook how are simulation result analyzed details
-Simulation outputs are exported as CSV snapshots every 100 ticks (25 days). Each snapshot contains per-agent records 
+Simulation outputs are exported as CSV snapshots every 100 ticks. Each snapshot contains per-agent records 
 with tick count, agent ID, layer, type, coordinates, alive flag, age, stage, energy, gravid status, and for inert agents, egg/larval 
 counts and water volume. Environmental values (temperature, precipitation, etc) are attached to each agent's row via bilinear interpolation 
 from the current climate frame.
 \par
-The analysis notebook (Python) performs the following steps:
+The analysis, visulization and validation of the resutls are realized through a jupyter notebook (Python) which performs the following steps:
 \par
 \begin{enumerate}
   \item \textbf{Daily aggregation}: The CSV is read in chunks (100 000 rows) to compute daily adult, larva, and pupa counts, as well 
-  as tank statistics (mean water volume, total eggs/larvae), using the tick-to-day conversion ($96$ ticks per day).  
+  as breading sites statistics (mean water volume, total eggs/larvae), using the tick-to-day conversion ($96$ ticks per day by default).  
   \item \textbf{Population dynamics}: Stage counts are plotted, and stage durations are estimated from cross-correlation of smoothed 
   population peaks. Theoretical durations are computed from species parameters at the mean observed temperature.  
   \item \textbf{Environmental correlation}: Pearson correlation between daily adult counts and mean temperature / precipitation is calculated.  
   \item \textbf{Suitability mapping}: A kernel density estimate (KDE) of adult points (bandwidth 0.002° ≈ 220 m) is generated and exported 
   as a GeoTIFF. A breeding site potential raster is created by rasterising the sum of eggs and larvae in water tanks on the last tick.  
   \item \textbf{Validation}: The continuous Boyce index \citep{2006.HA.ETA} and the proportion of occurrence points falling into the top 20\% 
-  of the suitability surface are computed using independently collected occurrence data (from GBIF, iNaturalist, Literature, clipped to 
+  of the suitability surface are computed using independently collected occurrence data (from GBIF, iNaturalist, literature, clipped to 
   the study area).  
   \item \textbf{Export}: Daily summaries and a sample of raw data are saved for further analysis.
 \end{enumerate}
@@ -249,31 +277,27 @@ All figures and rasters are stored in a user-defined output directory.
 \subsection{Case Study Design}
 \label{sec:case_study}
 \subsubsection{Vector and Study Site}
-% Dire Dawa, Oromia Woredas Ethiopia , all the details and citations on why this study sites were selected
 \par
-The case study is set in Ethiopia, focusing on two contrasting regions: the city of Dire Dawa and selected \textit{woredas} (districts) 
-in the Oromia region. Both areas have experienced recent incursions of the Asian malaria vector \textit{Anopheles stephensi} and are 
+The case study is set in Ethiopia, focusing on two contrasting regions: Dire Dawa and Oromia. 
+Both areas have experienced recent incursions of the Asian malaria vector \textit{Anopheles stephensi} and are 
 considered high-risk zones for urban and peri-urban malaria transmission \citep{2020.MB.GDO, 2021.MB.AUO, 2023.DH.FRO}.
 \par
-Dire Dawa (\ang{41.85} E, \ang{9.60} N) is a low-altitude (\SI{\sim 1200}{\meter}) urban centre with a semi-arid climate and a known 
-history of \textit{An. stephensi} establishment, first reported in 2018 \citep{2020.MB.GDO}. The Oromia study area comprises several 
-\textit{woredas} (e.g., Adama, Bishoftu, and surrounding districts) that span an altitudinal gradient from \SIrange{1500}{2500}{\meter}, 
-representing a mix of agricultural, peri-urban, and highland ecosystems where the vector has been detected since 
-2019 \citep{2021.MB.AUO, 2024.TA.SDA}. These sites were selected because they provide a natural experiment to evaluate the model's 
+Dire Dawa (\ang{9.6049} N, \ang{41.8585} E) is a low-altitude (\SI{\sim 1200}{\meter}) urban centre with a semi-arid climate and a known 
+history of \textit{An. stephensi} establishment, first reported in 2018 \citep{2020.MB.GDO}. The Oromia (\ang{7.5460} N, \ang{40.6347} E) 
+study area comprises several \textit{woredas} (e.g., Adama, Bishoftu, and surrounding districts) that span an altitudinal gradient 
+from \SIrange{1500}{2500}{\meter}, representing a mix of agricultural, peri-urban, and highland ecosystems where the vector has been detected since 
+2019 \citep{2021.MB.AUO, 2024.TA.SDA}. These sites were selected because they provide a natural experiment to evaluate the simulator's 
 ability to capture spatial heterogeneity in vector abundance driven by temperature, urbanisation, and host availability 
 \citep{2025.TD.BOA, 2024.GZ.ROC}.
 
 \subsubsection{Vector Biology}
-% details on anopheles stephensi biology and equations with detail oh how parameters where caculated
-% for the final matrix as well as the citations
-% Required packages: \usepackage{amsmath, booktabs, siunitx}
 
 \textit{Anopheles stephensi} is a highly adaptive urban malaria vector native to South Asia and the Middle East, now established 
 in the Horn of Africa \citep{2024.RT.IAS}. Its life cycle is tightly coupled to temperature, and its larvae exploit a wide range 
 of artificial containers, especially overhead water tanks and construction pits \citep{2016.ST.OTI}. 
 
-The temperature-dependent functions described in Section~\ref{sec:lifecycle} were parameterised for \textit{An. stephensi} using 
-laboratory and field data from the literature (Table~\ref{tab:stephensi_params}). Development rates ($d_E, d_L, d_P$) and adult 
+The temperature-dependent functions described in Section \ref{sec:lifecycle} were parameterised for \textit{An. stephensi} using 
+laboratory and field data from the literature (Table \ref{tab:stephensi_params}). Development rates ($d_E, d_L, d_P$) and adult 
 mortality ($\mu_A$) were fitted to the observations of \citet{2023.JJ.BBA} and \citet{2025.CG.EOT}. Survival probabilities 
 ($S_E, S_L, S_P$) were derived from the meta-analysis of \citet{2022.OC.TIT}. Fecundity coefficients ($a_F, b_F, T_{\max}, c_F$) 
 were taken from \citet{2023.JJ.BBA}, who estimated daily egg production under varying thermal regimes. 
@@ -295,7 +319,7 @@ The resulting daily projection matrix for \textit{An. stephensi} at a reference 
 where the dominant eigenvalue $\lambda_{\max} = 1.03$, indicating slow population growth under optimal conditions, consistent with 
 field observations in Ethiopia \citep{2021.MB.AUO, 2022.AH.TPI}.
 
-\begin{table}[htbp]
+\begin{table}[!htb]
 \centering
 \small % Slighting smaller font to ensure table fits page width
 \caption{Species-specific parameters for \textit{Anopheles stephensi} used in the case study.}
@@ -311,7 +335,7 @@ $S_L$ & Larva survival & $\text{amp}=0.88, \mu=26.8, \sigma=3.8$ & \citet{2022.O
 $S_P$ & Pupa survival & $\text{amp}=0.91, \mu=26.5, \sigma=3.6$ & \citet{2022.OC.TIT} \\
 $\mu_A$ & Adult mortality (day$^{-1}$) & $a=0.00012, b=-0.0018, c=0.055$ & \citet{2025.CG.EOT} \\
 $F$ & Fecundity (eggs/female/day) & $a_F=-0.0099, b_F=0.567, T_{\max}=32.0, c_F=2.97$ & \citet{2023.JJ.BBA} \\
-$K$ & Host scaling factor & $1 + \ln(1+\text{popdens})$ & WorldPop (2020) \\ \bottomrule
+$K$ & Host scaling factor & $1 + \ln(1+\text{popdens})$ & - \\ \bottomrule %Worldpop(2020)
 \end{tabular}
 \end{table}
 
@@ -335,18 +359,17 @@ The simulation integrates five categories of data:
 	\citep{2020.MB.GDO, 2021.MB.AUO, 2023.DH.FRO}. Only records with precise coordinates and collection dates 
 	in 2018--2022 were retained.
     
-    \item \textbf{Bionomic and life-history data} -- Parameter values (Table~\ref{tab:stephensi_params}) were extracted 
+    \item \textbf{Bionomic and life-history data} -- Parameter values (Table \ref{tab:stephensi_params}) were extracted 
 	from peer-reviewed literature \citep{2022.OC.TIT, 2023.JJ.BBA, 2025.CG.EOT} and supplemented with expert knowledge.
     
-    \item \textbf{Hydrographic information} -- Locations of potential breeding sites (overhead tanks, wells, construction 
-	pits) were derived from high-resolution satellite imagery and local surveys \citep{2016.ST.OTI, 2024.TA.SDA}.
+    % \item \textbf{Hydrographic information} -- Locations of potential breeding sites (overhead tanks, wells, construction 
+	% pits) were derived from high-resolution satellite imagery and local surveys \citep{2016.ST.OTI, 2024.TA.SDA}.
 \end{itemize}
 
 All data were harmonised to the WGS84 geographic coordinate system (EPSG:4326) and stored in a structured file hierarchy.
 
 \subsubsection{Simulation Assupmtions, Rules and Configuration}
 \label{sec:sim_assumptions}
-% the rules and simulation configurations
 
 The simulation makes the following key assumptions:
 \begin{enumerate}  
@@ -370,11 +393,11 @@ The simulation makes the following key assumptions:
 	local population density.
 \end{enumerate}
 
-The behavioural rules (Table~\ref{tab:rules}) are encoded in the YAML configuration file (\texttt{simulation.yaml}) and 
+The behavioural rules (Table \ref{tab:rules}) are encoded in the YAML configuration file (\texttt{simulation.yaml}) and 
 evaluated in priority order at each tick. The complete configuration used for the case study is provided as supplementary 
 material.
 
-\begin{table}[htbp]
+\begin{table}[!htb]
 \centering
 \caption{Behavioural rules for \textit{An. stephensi} adults.}
 \label{tab:rules}
@@ -391,27 +414,36 @@ Otherwise & \texttt{rest} & 2 \\ \bottomrule
 \end{tabular}
 \end{table}
 
-The simulation was run for \SI{180}{\day} (six months, tick = \SI{15}{\minute}, \num{17280} ticks) with a burn-in of \SI{5}{\day} 
+The simulation was run for 180 days (six months, tick = \SI{15}{\minute}, \num{17280} ticks) with a burn-in of 5 days 
 to allow transients to decay. Output snapshots were exported every 100 ticks and analysed using the Python notebook described in 
-Section~\ref{sec:analysis}.
+Section \ref{sec:analysis}.
+
+\subsubsection{Experimental Setup}
+All simulations were executed on a laptop equipped with an Intel Core i5-6300U processor (2 physical cores, 4 threads, base frequency 
+\SI{2.40}{\giga\hertz}, max turbo \SI{3.00}{\giga\hertz}) and \SI{8}{\giga\byte} of RAM. The operating system was Linux (x86\_64), 
+and the Java Virtual Machine (JVM) was configured with a maximum heap size of \SI{1950}{\mega\byte} (approximately \SI{80}{\percent} of physical memory). 
+The simulation engine used a thread pool with three worker threads (one less than the total number of logical threads) to avoid 
+oversubscription. The spatial registry implemented a lazy grid with a cell size of \SI{0.001}{\degree} ($\approx$\SI{110}{\meter}). 
+Each simulation ran for 180 simulated days (\num{17280} ticks of \SI{15}{\minute}). Output snapshots were exported every 100 ticks. 
+The analysis notebook (Python 3.10) was executed on the same hardware.
 
 
 \section{Results}
 \label{sec:results}
 
-The simulation was executed for a duration of six months (\SI{180}{\day}, comprising \num{17280} ticks of \SI{15}{\minute} each) 
-over the contrasting study areas of Dire Dawa and selected Oromia \textit{woredas} in Ethiopia. The model utilised the 
+The simulation was executed for a duration of six months (180 days, comprising \num{17280} ticks of \SI{15}{\minute} each) 
+over the contrasting study areas of Dire Dawa and  Oromia in Ethiopia. The model utilised the 
 temperature-dependent lifecycle parameters specifically fitted for \textit{Anopheles stephensi}. Output snapshots were processed 
 to evaluate population stability, environmental response, and spatial suitability.
 
-The mosquito population reached a near-steady state after approximately \SI{10}{\day} of simulation. Across both sites, adult 
+The mosquito population reached a near-steady state after approximately 10 days of simulation. Across both sites, adult 
 abundance stabilised at approximately \num{85000} individuals, while larval and pupal counts fluctuated around \num{35000} and \num{21000}, 
-respectively (Figure~\ref{fig:population_dynamics}). Analysis of the six-month time series revealed that the daily adult count maintained 
+respectively (Figure \ref{fig:population_dynamics}). Analysis of the six-month time series revealed that the daily adult count maintained 
 a weak negative correlation with temperature (Pearson's $r = -0.119$, $p = 0.12$) and negligible correlation with precipitation 
 ($r = 0.009$, $p = 0.91$). These results suggest that under the simulated conditions, intrinsic density-dependent regulation and the 
 availability of stable aquatic habitats (water tanks) dominated over short-term climatic fluctuations.
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
@@ -429,13 +461,13 @@ availability of stable aquatic habitats (water tanks) dominated over short-term 
      \label{fig:population_dynamics}
 \end{figure}
 
-Theoretical stage durations were calculated based on the mean observed temperature (\SI{19.9}{\celsius}), yielding \SI{5.6}{\day} 
-for larvae and \SI{8.4}{\day} for pupae. The dominant eigenvalue ($\lambda_{\max}$) of the Metzler projection matrix, averaged over 
+Theoretical stage durations were calculated based on the mean observed temperature (\SI{19.9}{\celsius}), yielding 5.6 days 
+for larvae and 8.4 days for pupae. The dominant eigenvalue ($\lambda_{\max}$) of the Metzler projection matrix, averaged over 
 the full simulation period, was \num{1.003}. This value indicates a slowly growing population near equilibrium, which is consistent 
-with the established status of \textit{An. stephensi} in urban Ethiopia \citep{2021.MB.AUO}. Figure~\ref{fig:growth} illustrates the 
+with the established status of \textit{An. stephensi} in urban Ethiopia \citep{2021.MB.AUO}. Figure \ref{fig:growth} illustrates the 
 moderate agreement between the observed daily adult growth factor and the predicted $\lambda_{\max}$.
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
@@ -454,11 +486,11 @@ moderate agreement between the observed daily adult growth factor and the predic
 \end{figure}
 
 A total of \num{1336} water tanks were simulated. Mean water volume remained highly stable at $\SI{85.3 \pm 0.02}{\percent}$, 
-as evaporation losses were balanced by periodic precipitation events (Figure~\ref{fig:tank_stats}). The reciprocal trend 
+as evaporation losses were balanced by periodic precipitation events (Figure \ref{fig:tank_stats}). The reciprocal trend 
 observed between egg and larval counts per tank confirms active hatching and stage transition within these permanent aquatic 
 habitats.
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
@@ -476,10 +508,10 @@ habitats.
 \end{figure}
 
 Daily average temperatures ranged between \SIrange{19.5}{20.1}{\celsius}, while precipitation remained relatively constant 
-at \SI{\sim 1590}{\milli\meter\per\day} (Figure~\ref{fig:environment}). The low variability in these drivers over the 
+at \SI{\sim 1590}{\milli\meter\per\day} (Figure \ref{fig:environment}). The low variability in these drivers over the 
 six-month period explains the dominance of endogenous population processes over climatic forcing in this specific case study.
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
@@ -497,23 +529,23 @@ six-month period explains the dominance of endogenous population processes over 
 \end{figure}
 
 Spatial suitability maps were generated using Kernel Density Estimation (KDE) with a bandwidth of \ang{0.002} 
-(\SI{\sim 220}{\meter}). As shown in Figure~\ref{fig:adult_suitability}, adult mosquito density was highest in urban 
+(\SI{\sim 220}{\meter}). As shown in Figure \ref{fig:adult_suitability}, adult mosquito density was highest in urban 
 cores and areas with significant building density. Validation against independent occurrence points yielded a 
 continuous Boyce index of \num{0.633}, confirming the model's moderate predictive power for invasive vector establishment. 
 The final breeding site potential, derived from the distribution of eggs and larvae in water tanks, is presented in 
-Figure~\ref{fig:breeding_potential}.
+Figure \ref{fig:breeding_potential}.
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{figs/dire_dawa/adult_suitability_no_occurrences.png}
+         \includegraphics[width=\textwidth]{figs/dire_dawa/adult_suitability.png}
          \caption{Dire Dawa}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{figs/oromia/adult_suitability_no_occurrences.png}
+         \includegraphics[width=\textwidth]{figs/oromia/adult_suitability.png}
          \caption{Oromia}
      \end{subfigure}
      \caption{Adult mosquito suitability maps (KDE) overlaid with occurrence records (red dots). High density 
@@ -521,26 +553,71 @@ Figure~\ref{fig:breeding_potential}.
      \label{fig:adult_suitability}
 \end{figure}
 
-\begin{figure}[htbp]
+\begin{figure}[!htb]
      \centering
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{figs/dire_dawa/breeding_site_potential_no_occurrences.png}
+         \includegraphics[width=\textwidth]{figs/dire_dawa/breeding_site_potential.png}
          \caption{Dire Dawa}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.49\textwidth}
          \centering
-         \includegraphics[width=\textwidth]{figs/oromia/breeding_site_potential_no_occurrences.png}
+         \includegraphics[width=\textwidth]{figs/oromia/breeding_site_potential.png}
          \caption{Oromia}
      \end{subfigure}
-     \caption{Breeding site potential rasterized from final egg and larval counts in water tanks.}
+     \caption{Breeding site potential rasterized from final egg and larval counts in water tanks, 
+     overlaid with occurrence records (red dots).}
      \label{fig:breeding_potential}
 \end{figure}
 
+\newpage
+\par
+Table \ref{tab:performance} summarizes the computational and agent statistics of the simulation for both study sites.
+Both simulations completed the full 180-day period (\num{17280} ticks) without errors. The Oromia run had a slightly higher 
+average tick time (\SI{124.9}{\milli\second} vs.\ \SI{116.0}{\milli\second}) and lower effective frame rate (\num{8.0} FPS), 
+despite having fewer agents (\num{109436} vs.\ \num{176350}). This is attributable to the larger spatial extent of the Oromia 
+study area, which required a much larger spatial grid (\num{60898750} cells vs.\ \num{193410} cells for Dire Dawa), leading to 
+a lower average agent density per cell (\num{0.003} vs.\ \num{2.37}). The spatial registry's lazy grid implementation helped 
+to maintain acceptable performance even with millions of empty cells.
+\par
+Memory consumption was higher for the Oromia simulation (\SI{82.8}{\percent} of the \SI{1950}{\mega\byte} heap) due to the 
+larger grid metadata and a greater number of rule evaluations (\num{12000} vs.\ \num{7012}). However, both runs stayed well 
+below the memory limit, confirming that a standard laptop can execute the model for region-scale simulations. The total number 
+of spatial inserts and updates reflects the differences in initial seeding and movement activity between the two sites.
+\par
+Overall, the simulation framework demonstrated stable performance, with average tick times below \SI{125}{\milli\second}, 
+effectively enabling the simulation of six months of vector population dynamics in less than one hour of wall-clock time 
+on consumer hardware.
+
+\begin{table}[!htb]
+\centering
+\caption{Performance metrics and agent counts for the two simulation runs.}
+\label{tab:performance}
+\begin{tabular}{l S[table-format=8.1] S[table-format=8.1]}
+\toprule
+Metric & {Dire Dawa} & {Oromia} \\ \midrule
+Total runtime (s) & 2499.6 & 2154.9 \\
+Average tick time (ms) & 124.9 & 116.0 \\
+Effective FPS & 8.0 & 8.6 \\
+Peak memory usage (MB) & 910 & 1614 \\
+Memory utilization (\% of max) & 46.7 & 82.8 \\
+Total agents (end of simulation) & 176350 & 109436 \\
+\quad Mosquitoes & 171608 & 108100 \\
+\quad Water tanks & 4742 & 1336 \\
+Rule evaluations & 7012 & 12000 \\
+Actions executed & 19463668 & 21240236 \\
+Spatial registry -- total inserts & 505987 & 213813 \\
+Spatial registry -- total updates & 251 & 227 \\
+Maximum agents per spatial cell & 1416 & 237 \\ \bottomrule
+\end{tabular}
+\end{table}
+
+
+
 \section{Discussion}
 \label{sec:discussion}
-
+\par
 The simulation results demonstrate that the agent-based model successfully reproduces population dynamics for \textit{Anopheles stephensi} 
 across two distinct Ethiopian ecological settings. In the Oromia \textit{woredas}, the population maintained a near-equilibrium state 
 ($\lambda_{\max} = 1.003$), whereas in Dire Dawa, the model predicted a more robust growth potential ($\lambda_{\max} = 1.074$). These 
@@ -548,14 +625,14 @@ findings align with field reports that identify Dire Dawa as a primary hotspot f
 The theoretical stage durations—ranging from \SI{5.0}{\day} in the warmer Dire Dawa (\SI{21.9}{\celsius}) to \SI{5.6}{\day} in Oromia 
 (\SI{19.9}{\celsius}) for larvae—fall within the ranges reported in laboratory studies \citep{2023.JJ.BBA}, supporting the validity of our 
 temperature-dependent parameterisation.
-
+\par
 A key finding is the site-specific response to environmental drivers. In Oromia, adult abundance showed a weak correlation with temperature 
 ($r = -0.119$), suggesting that density-dependent regulation and permanent aquatic habitats (water tanks) outweigh short-term climatic forcing. 
 Conversely, in Dire Dawa, a strong negative correlation was observed between adult counts and precipitation ($r = -0.721, p < 0.001$). This 
 potentially reflects a "wash-out" effect or a shift in habitat availability during high-rainfall events, which has been documented for urban 
 container-breeding mosquitoes elsewhere \citep{2016.ST.OTI}. These results underscore the importance of local hydro-climatic contexts when 
 modeling \textit{An. stephensi} stability.
-
+\par
 The spatial suitability maps generated via KDE correctly highlighted urban cores and high-building-density areas as the most suitable habitats. 
 Validation against independent occurrence points yielded a Continuous Boyce Index (CBI) of \num{0.633} for Oromia, indicating moderate to high 
 predictive performance. While the CBI for Dire Dawa was lower (\num{0.379}), this is likely an artifact of extreme data sparsity, as only one 
@@ -563,21 +640,36 @@ occurrence record remained within the study area after spatial clipping. The fac
 and \SI{14.3}{\percent} in Oromia fell into the top \SI{20}{\percent} of predicted suitability areas suggests that the model effectively 
 captures high-risk zones, even with limited validation data.
 
+\par 
+The performance analysis (Table \ref{tab:performance}) demonstrates that the simulation framework is computationally efficient and can 
+run on modest hardware. Both six-month simulations completed in less than an hour on a standard laptop (Intel Core i5, \SI{8}{\giga\byte} RAM), 
+with average tick times below \SI{125}{\milli\second}. Peak memory usage remained within \SI{1.6}{\giga\byte}, well under the \SI{2}{\giga\byte} 
+heap limit. These characteristics are critical for deployment in sub-Saharan African public health institutions, where access to high-performance 
+computing clusters is often limited. The framework's ability to handle large geographical extents (e.g., the Oromia region with \num{60} 
+million spatial cells) while maintaining acceptable performance is particularly noteworthy. By leveraging a lazy spatial grid and 
+parallel agent processing, the model scales to region-wide simulations without requiring specialized hardware. 
+\par
+This opens the door for routine use by national malaria control programs and regional health observatories, enabling them to run scenario 
+analyses, evaluate intervention strategies, and generate risk maps using only standard office computers. Future work will focus on reducing 
+the memory footprint further and providing user-friendly interfaces to lower the technical barrier for public health officers in 
+endemic areas.
+\par
 Several limitations should be acknowledged. The current movement rules utilize a random walk with a fixed step size, which may not fully capture 
 complex host-seeking behaviors toward specific resource gradients. Furthermore, the model assumes human population density is the sole proxy 
 for blood-meal availability. Given that \textit{An. stephensi} exhibits plastic feeding behavior, including zoophily, a multi-host formulation 
 might improve fecundity estimates in peri-urban areas. 
-
-Despite these limitations, the model provides a valuable tool for designing targeted vector control interventions. The YAML-driven 
+\par
+Despite these limitations, we believe the framework provides a valuable tool for designing targeted vector control interventions. The YAML-driven 
 parameterisation allows for rapid adaptation to other regions or species. Future research should extend these simulations to multi-year runs 
 to evaluate the impact of long-term climate variability and the effectiveness of larval source management, such as the systematic covering of 
 water tanks, on population suppression.
 
 \section{Conclusion}
 \label{sec:conclusion}
-This study presented an agent-based modelling framework for simulating the population dynamics of \textit{Anopheles stephensi} in the Horn of 
-Africa. The model successfully integrated temperature-dependent life-history traits with spatially explicit environmental data and a 
-stage-structured Metzler matrix. The framework was applied to Dire Dawa and Oromia using a six-month simulation driven by ERA5-Land data. 
+This study presented an agent-based modelling framework for simulating the population dynamics of mosquitoes in low resource settings,
+with a case study on \textit{Anopheles stephensi} in two Ethiopian regions (Dire Dawa & Oromia). The model successfully integrated 
+temperature-dependent life-history traits with spatially explicit environmental data and a stage-structured Metzler matrix. The framework was applied 
+to Dire Dawa and Oromia using a six-month simulation driven by ERA5-Land data. 
 \par
 The results demonstrated that the simulated populations reached steady or growing states consistent with field observations of established 
 vectors. The model identified significant differences in regional growth factors ($\lambda_{\max}$ \numrange{1.003}{1.074}) and climatic 
@@ -586,8 +678,14 @@ occurrence data yielded Continuous Boyce Indices ranging from \numrange{0.379}{0
 hotspots even in data-poor environments.
 \par
 While limitations regarding adult dispersal and host-seeking behavior remain, the framework provides a generic, reusable, and easily 
-parameterisable tool for public health decision-making. By linking life-cycle biology with spatial infrastructure data, the model supports 
-the evidence-based planning of larval source management and urban malaria control programmes in recently invaded territories.
+parameterisable tool for public health decision-making. By linking life-cycle biology with spatial infrastructure data, the model could
+support the evidence-based planning of larval source management and urban malaria control programmes in recently invaded territories.
+
+
+\section*{Data availability}
+The code of the simulator and the data used for the case study are all available in a github directory:
+\url{https://github.com/Vansnoden/monadvsim}.
+
 
 \section*{Acknowledgments}
 \par
@@ -598,7 +696,6 @@ Climate Change Service (ERA5-Land), the Malaria Atlas Project, and the Vector At
 We particularly thank the data contributors and curators who make their work publicly available, 
 enabling research of this nature.
 
-\section*{Code availability}
 
 \bibliographystyle{apalike}
 \bibliography{bibliography.bib}
