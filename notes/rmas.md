@@ -153,6 +153,91 @@ All temperatures in the equations are in **degrees Celsius**. The simulation aut
 
 
 
+==========================================================================================
+
+[Agboka et al 2025](https://doi.org/10.1111/ppl.70659) Dual Perspectives From Mechanistic and Correlative Approaches in Mapping the Distribution of the Lesser Mealworm Alphitobius diaperinus.
+
+life stages: egg (E), larva (L), pupa (P) and adult (A)
+
+The population dynamics of the insect are governed by the following system of differential equations
+(Rossini, Contarini, et al. 2022; Rossini, Bruzzone, et al. 2022; Ndjomatchoua et al. 2024):
+
+Equation 1.
+$\left(\begin{array}{c} 
+{dE \over dt}\\
+{dL \over dt}\\
+{dP \over dt}\\
+{dA \over dt}
+\end{array}\right) = 
+\left(\begin{array}{cccc}
+-(D_E + M_E) & 0 & 0 & F.S_r \\
+D_E & -(D_L + M_L) & 0 & 0 \\
+0 & D_L & - (D_P + M_P) & 0 \\
+0 & 0 & D_P & -M_A 
+\end{array}\right)
+\left(\begin{array}{c}
+E \\
+L \\
+P \\
+A
+\end{array}\right)
+$
+
+Where each symbol is described in the table bellow:
+
+Table 1: Temperature-­dependent transition rates (development, mortality and fertility) included in Equation (1) were obtained from the current
+literature for the case of Alphitobius diaperinus.
+
+|Symbol|Biological meaning|Mathematical expression|Parameters|Data source|
+|:---|:---|:---|:---|:----|
+|$S_r$|Sex Ratio| - | 0.5 | Assumed|
+|$D_E$|Egg developmental rate| $e^{\rho T - e^{\rho k - {k-T \over \Delta}}} + \lambda$ | $\begin{array}{c}\rho = 0.01107\\ k = 41.54210 \\ \Delta = 0.98086 \\ \lambda = − 1.14079 \end{array}$ | Rueda and Axtell (1996); Wilson and Miner (1969)|
+|$D_L$|Larva developmental rate| $aT(T-T_{min})(T_{max}-T)^{1 \over m}$ | $\begin{array}{c} a = 3.285e − 05 \\T_{min} = 1.732e + 01\\ T_{max} = 4.088e + 01 \\m = 2.169e + 00\end{array}$ |  Rueda and Axtell (1996); Wilson and Miner (1969) |
+|$D_P$|Pupa developmental rate| $e^{\rho T - e^{\rho k - {k-T \over \Delta}}} + \lambda$ | $\begin{array}{c}\rho = 0.0096287\\ k = 41.1843270 \\ \Delta = 0.9295908 \\ \lambda = − 1.1507102 \end{array}$ |  Rueda and Axtell (1996); Wilson and Miner (1969)|
+|$M_E$|Egg mortality rate| $ e^{b_1 + b_2 T + b_3 T^2} $ | $\begin{array}{c}b_1 = 3.572876\\ b_2 = − 0.323474 \\ b_3 = 0.004941 \end{array}$ |  Rueda and Axtell (1996); Wilson and Miner (1969)|
+|$M_L$|Larva mortality rate| $ e^{b_1 + b_2 T + b_3 T^2} $ | $\begin{array}{c}b_1 = 3.572876\\ b_2 = − 0.323474 \\ b_3 = 0.004941 \end{array}$ |  Rueda and Axtell (1996); Wilson and Miner (1969)|
+|$M_P$|Pupa mortality rate| $ e^{b_1 + b_2 T + b_3 T^2} $ | $\begin{array}{c}b_1 = 5.882576\\ b_2 = − 0.578528 \\ b_3 = 0.009458 \end{array}$ |  Rueda and Axtell (1996); Wilson and Miner (1969)|
+|$F$|Female Fecundity rate| $ e^{r_{max} + c(T_{opt} - T)^2} $ | $\begin{array}{c}r_{max} = 1.571304\\ T_{opt} = 32.908160 \\ c = − 0.007832 \end{array}$ | Wilson and Miner (1969)|
+|$M_A$|Adult mortality rate| $ 1 \over 240 $ | $Days^{-1}$ | Sammarco et al. (2023)|
+
+The effect of temperature on bio-­demographic parameters of the
+lesser mealworm A. diaperinus, instead, has been investigated 
+by several authors and summarised in Wilson and Miner (1969),
+Rueda and Axtell (1996), Renault et al. (2004), and Muzio
+et al. (2024). A complete list of the temperature-­
+dependent
+transition rates needed by the model (1) and the corresponding
+parameters retrieved from the cited literature is provided in
+Table 1.
+Equation (1) is the starting point to compute the RI. The
+RI derives from the condition for the stability of the system
+det (−Ω) > 0 (Ndjomatchoua et al. 2024), where Ω is the 4 × 4
+core matrix associated with the system (1). The resulting condi-
+tion for stability can be written as:
+
+Equation 2:
+${{F S_r D_E D_L D_P}\over{(D_E + M_E)(D_L + M_L)(D_P + M_P)M_A}} < 1$
+
+The left-­hand side of the Equation (2) is the risk index (RI):
+
+$ RI = {{F S_r D_E D_L D_P}\over{(D_E + M_E)(D_L + M_L)(D_P + M_P)M_A}} $
+
+Equation (3) indicates a lesser mealworm population increase
+for RI > 1 and a decreasing trend otherwise.
+
+Temperature values were retrieved from climatic research unit
+(CRU) 4.8 (1901–2023) (Harris et al. 2020) and subsequently
+processed into long-­term monthly averages. The computed RI
+using R software (R Core Team 2024) was then applied to these
+spatial temperature matrices to compute annual, quarterly and
+trimestral risk maps, providing a time-­varying perspective on
+the mealworm distribution dynamics.
+
+
+
+
+
+
 
 
 
